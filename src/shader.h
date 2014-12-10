@@ -2,7 +2,10 @@
 #define SHADER_H_
 
 #include <GL/glew.h>
+#include <iostream>
 #include <string>
+
+#include "kms.h"
 
 namespace kms {
 

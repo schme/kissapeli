@@ -8,16 +8,34 @@ void initRender( HDC dc ) {
     DeviceContext = dc;
 
     std::vector<kms::Shader> shaders;
-    shaders.push_back( kms::Shader::loadShaderFile( "min.vert", GL_VERTEX_SHADER));
-    shaders.push_back( kms::Shader::loadShaderFile( "min.frag", GL_FRAGMENT_SHADER));
+    shaders.push_back( kms::Shader::loadShaderFile( SHADERPATH("min.vert"), GL_VERTEX_SHADER));
+    shaders.push_back( kms::Shader::loadShaderFile( SHADERPATH("min.frag"), GL_FRAGMENT_SHADER));
 
     shaderProgram = glCreateProgram();
     for (int i = 0; i < shaders.size(); ++i) {
         glAttachShader( shaderProgram, shaders[i].object());
     }
-
     glLinkProgram( shaderProgram);
+    for (int i = 0; i < shaders.size(); ++i)
+    {
+        glDetachShader( shaderProgram, shaders[i].object());
+    }
 
+    GLint status;
+    glGetProgramiv( shaderProgram, GL_LINK_STATUS, &status);
+    if( status == GL_FALSE) {
+        std::string msg( "Program linking failure: " );
+
+        GLint infoLogLength;
+        glGetProgramiv( shaderProgram, GL_INFO_LOG_LENGTH, &infoLogLength );
+        char* strInfoLog = new char[infoLogLength + 1];
+        glGetProgramInfoLog( shaderProgram, infoLogLength, NULL, strInfoLog );
+        msg += strInfoLog;
+        delete[] strInfoLog;
+        CPP_OUTPUTDEBUG( msg )
+
+        glDeleteProgram( shaderProgram ); shaderProgram = 0;
+    }
 }
 
 

@@ -5,10 +5,7 @@
 
 #include "shader.h"
 
-#include <stdio.h>
 #include <fstream>
-#include <iostream>
-#include <string>
 #include <sstream>
 
 namespace kms {
@@ -18,7 +15,7 @@ Shader::Shader( const char *shaderCode, GLenum shaderType) :
 {
     _object = glCreateShader( shaderType);
     if( !_object) {
-        perror( "SHADER FAIL: glCreateShader\n");        
+        CPP_OUTPUTDEBUG( "SHADER FAIL: glCreateShader")
     }
 
     glShaderSource(_object, 1, (const GLchar**)&shaderCode, NULL);
@@ -27,11 +24,10 @@ Shader::Shader( const char *shaderCode, GLenum shaderType) :
     GLint status;
     glGetShaderiv(_object, GL_COMPILE_STATUS, &status);
     if( status == GL_FALSE) {
-        perror( "SHADER FAIL: Compiling\n");
+        CPP_OUTPUTDEBUG( "SHADER FAIL: Compiling")
     }
 
-
-    std::cout << shaderCode << std::endl;
+    std::cerr << shaderCode << std::endl;
 }
 
 

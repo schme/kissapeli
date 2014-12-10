@@ -380,6 +380,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
     gameMemory.memoryPool = VirtualAlloc( 0, gameMemory.stackSize,
                             MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     gameMemory.top = gameMemory.memoryPool;
+    gameMemory.isInitialized = true;
     // TODO: Not like this you idiot.
     assert( gameMemory.memoryPool && " MemoryPool allocation failed!\n");
 

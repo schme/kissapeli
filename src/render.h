@@ -6,8 +6,8 @@
 #include "GL/glew.h"
 #include "GL/wglew.h"
 
-#include "kms.h"
 #include "shader.h"
+#include "kms.h"
 
 
 typedef float Color[3];
