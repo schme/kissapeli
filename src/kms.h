@@ -8,11 +8,8 @@
 
 #define DEBUG_STRING_SIZE 256
 
-#define C_OUTPUTDEBUG( msg)\
-    printf( msg );
-
-#define CPP_OUTPUTDEBUG( msg )\
-    std::cout << msg << std::endl;
+#define OUTPUTDEBUG( msg)\
+    fprintf( stderr, "%s", msg )
 
 #define WIN_OUTPUTDEBUG( msg )\
     char buffer[DEBUG_STRING_SIZE];\

@@ -1,74 +1,77 @@
 #include "render.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 HDC DeviceContext = {};
 
-GLuint shaderProgram = 0;
+static GLuint shaderProgram = 0;
+static GLuint vbo = 0;
+static GLuint vao = 0;
 
-void initRender( HDC dc ) {
+void initVertexBuffer();
+
+
+int initRender( HDC dc ) {
+
     DeviceContext = dc;
 
-    std::vector<kms::Shader> shaders;
-    shaders.push_back( kms::Shader::loadShaderFile( SHADERPATH("min.vert"), GL_VERTEX_SHADER));
-    shaders.push_back( kms::Shader::loadShaderFile( SHADERPATH("min.frag"), GL_FRAGMENT_SHADER));
+    std::vector<GLint> shaders;
+    shaders.push_back(kms::loadShader( SHADERPATH("min.vert"), GL_VERTEX_SHADER));
+    shaders.push_back(kms::loadShader( SHADERPATH("min.frag"), GL_FRAGMENT_SHADER));
 
-    shaderProgram = glCreateProgram();
-    for (int i = 0; i < shaders.size(); ++i) {
-        glAttachShader( shaderProgram, shaders[i].object());
-    }
-    glLinkProgram( shaderProgram);
-    for (int i = 0; i < shaders.size(); ++i)
-    {
-        glDetachShader( shaderProgram, shaders[i].object());
+    shaderProgram = kms::createProgram( shaders);
+
+    if( !shaderProgram) {
+        return 0;
     }
 
-    GLint status;
-    glGetProgramiv( shaderProgram, GL_LINK_STATUS, &status);
-    if( status == GL_FALSE) {
-        std::string msg( "Program linking failure: " );
+    initVertexBuffer();
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-        GLint infoLogLength;
-        glGetProgramiv( shaderProgram, GL_INFO_LOG_LENGTH, &infoLogLength );
-        char* strInfoLog = new char[infoLogLength + 1];
-        glGetProgramInfoLog( shaderProgram, infoLogLength, NULL, strInfoLog );
-        msg += strInfoLog;
-        delete[] strInfoLog;
-        CPP_OUTPUTDEBUG( msg )
-
-        glDeleteProgram( shaderProgram ); shaderProgram = 0;
-    }
+    return 1;
 }
 
 
-void gl_Draw(Color clearColor) {
+const float triangleVertice[] = {
+        0.75f, 0.75f, 0.0f, 1.0f,
+        0.75f, -0.75f, 0.0f, 1.0f,
+        -0.75f, -0.75f, 0.0f, 1.0f,
+        -0.75f, 0.75f, 0.0f, 1.0f,
+};
+
+
+void initVertexBuffer() {
+    
+    glGenBuffers(1, &vbo);
+
+    glBindBuffer( GL_ARRAY_BUFFER, vbo);
+    glBufferData( GL_ARRAY_BUFFER, sizeof( triangleVertice), triangleVertice, GL_STATIC_DRAW); 
+    glBindBuffer( GL_ARRAY_BUFFER, 0);
+
+}
+
+
+void draw(Color clearColor) {
 
     glClearColor( clearColor[0], clearColor[1], clearColor[2], 0.f);
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear( GL_COLOR_BUFFER_BIT);
 
-    glBegin(GL_QUADS);
-    glNormal3f( 0.0F, 0.0F, 1.0F);
-    glVertex3f( 0.5F, 0.5F, 0.5F); glVertex3f(-0.5F, 0.5F, 0.5F);
-    glVertex3f(-0.5F,-0.5F, 0.5F); glVertex3f( 0.5F,-0.5F, 0.5F);
+    glUseProgram( shaderProgram);
 
-    glNormal3f( 0.0F, 0.0F,-1.0F);
-    glVertex3f(-0.5F,-0.5F,-0.5F); glVertex3f(-0.5F, 0.5F,-0.5F);
-    glVertex3f( 0.5F, 0.5F,-0.5F); glVertex3f( 0.5F,-0.5F,-0.5F);
+    glBindBuffer( GL_ARRAY_BUFFER, vbo);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
-    glNormal3f( 0.0F, 1.0F, 0.0F);
-    glVertex3f( 0.5F, 0.5F, 0.5F); glVertex3f( 0.5F, 0.5F,-0.5F);
-    glVertex3f(-0.5F, 0.5F,-0.5F); glVertex3f(-0.5F, 0.5F, 0.5F);
-
-    glNormal3f( 0.0F,-1.0F, 0.0F);
-    glVertex3f(-0.5F,-0.5F,-0.5F); glVertex3f( 0.5F,-0.5F,-0.5F);
-    glVertex3f( 0.5F,-0.5F, 0.5F); glVertex3f(-0.5F,-0.5F, 0.5F);
-
-    glNormal3f( 1.0F, 0.0F, 0.0F);
-    glVertex3f( 0.5F, 0.5F, 0.5F); glVertex3f( 0.5F,-0.5F, 0.5F);
-    glVertex3f( 0.5F,-0.5F,-0.5F); glVertex3f( 0.5F, 0.5F,-0.5F);
-
-    glNormal3f(-1.0F, 0.0F, 0.0F);
-    glVertex3f(-0.5F,-0.5F,-0.5F); glVertex3f(-0.5F,-0.5F, 0.5F);
-    glVertex3f(-0.5F, 0.5F, 0.5F); glVertex3f(-0.5F, 0.5F,-0.5F);
-    glEnd();
+    glDrawArrays( GL_QUADS, 0, 4);
+    glUseProgram(0);
 
     SwapBuffers( DeviceContext);
 }
+
+
+void resize( int w, int h) {
+    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+};

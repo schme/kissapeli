@@ -1,19 +1,15 @@
 #ifndef RENDER_H_
 #define RENDER_H_
 
-#include <vector>
 
-#include "GL/glew.h"
-#include "GL/wglew.h"
-
-#include "shader.h"
 #include "kms.h"
-
+#include "kms_glutils.h"
 
 typedef float Color[3];
 
-void gl_Draw(Color );
-void initRender( HDC);
+int initRender( HDC);
+void resize(int w, int h);
+void draw(Color );
 
 
 #endif // RENDER_H_

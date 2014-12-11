@@ -37,7 +37,7 @@ void initGame(MemoryStack *memory) {
 
 void gameRender( HDC DeviceContext) {
 
-    gl_Draw( clearColor);
+    draw( clearColor);
 }
 
  
@@ -56,6 +56,12 @@ void gameUpdate( MemoryStack* memory, HDC DeviceContext) {
     clearColor[1] = sin( clearColor[1] + playIndex1);
     clearColor[2] = sin( clearColor[2] + playIndex1 + playIndex2);
 
+    // render
     gameRender( DeviceContext);
+}
+
+
+void resizeCallback( int w, int h) {
+    resize(w, h);
 }
 

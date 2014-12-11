@@ -47,5 +47,6 @@ struct Game {
 
 void gameRender( HDC);
 void gameUpdate(MemoryStack*, HDC);
+void resizeCallback( int w, int h);
 
 #endif // KISSAPELI_H_

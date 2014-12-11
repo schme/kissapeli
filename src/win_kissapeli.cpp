@@ -121,6 +121,10 @@ Win_WindowProc(  HWND Window,
             gameRender( DeviceContext);
             EndPaint( Window, &paint);
         } break;
+        case WM_SIZE: {
+            Win_WindowDimensions dimensions = Win_GetWindowDimensions( Window);
+            resizeCallback( dimensions.width, dimensions.height);
+        } break;
         case WM_CREATE: {
 
             DeviceContext = GetDC(Window);
@@ -352,7 +356,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
                     0,
                     WindowClass.lpszClassName,
                     "Kissapeli NextGen",
-                    WS_VISIBLE | WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
+                    WS_VISIBLE | WS_OVERLAPPEDWINDOW,
                     CW_USEDEFAULT, CW_USEDEFAULT,
                     windowWidth, windowHeight,
                     NULL,   // PrevInstance
