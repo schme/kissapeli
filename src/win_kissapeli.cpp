@@ -5,6 +5,7 @@
 #include <xaudio2.h>
 
 
+// check need
 static HGLRC RenderingContext;
 static bool globalPlaying;
 
@@ -118,7 +119,7 @@ Win_WindowProc(  HWND Window,
         case WM_PAINT: {
             PAINTSTRUCT paint;
             BeginPaint( Window, &paint);
-            gameRender( DeviceContext);
+            gameRender();
             EndPaint( Window, &paint);
         } break;
         case WM_SIZE: {
@@ -164,7 +165,7 @@ Win_WindowProc(  HWND Window,
 
 
 void
-Win_HandleMessages() {
+Win_HandleMessages(GameInput *input) {
 
     MSG Message;
     while( PeekMessage( &Message, 0,0,0, PM_REMOVE)) {
@@ -188,19 +189,19 @@ Win_HandleMessages() {
 
                 switch (VKCode) { 
                     case 'W': {
-
+                        input->KEY_W = 1;
                         OutputDebugStringA("W ");
                     } break;
                     case 'A': {
-
+                        input->KEY_A = 1;
                         OutputDebugStringA("A ");
                     } break;
                     case 'S': {
-
+                        input->KEY_S = 1;
                         OutputDebugStringA("S ");
                     } break;
                     case 'D': {
-
+                        input->KEY_D = 1;
                         OutputDebugStringA("D ");
                     } break;
                     case 'Q': {
@@ -213,18 +214,22 @@ Win_HandleMessages() {
                     } break;
                     case VK_UP: {
 
+                        input->KEY_UP = 1;
                         OutputDebugStringA("UP ");
                     } break;
                     case VK_LEFT: {
 
+                        input->KEY_LEFT = 1;
                         OutputDebugStringA("LEFT ");
                     } break;
                     case VK_DOWN: {
 
+                        input->KEY_DOWN = 1;
                         OutputDebugStringA("DOWN ");
                     } break;
                     case VK_RIGHT: {
 
+                        input->KEY_RIGHT = 1;
                         OutputDebugStringA("RIGHT ");
                     } break;
                     case VK_SPACE: {
@@ -388,13 +393,17 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // TODO: Not like this you idiot.
     assert( gameMemory.memoryPool && " MemoryPool allocation failed!\n");
 
+    gameInit( &gameMemory, DeviceContext);
+
     /**
      * Main Loop
      */
     while( globalPlaying) {
 
-        Win_HandleMessages();
-        gameUpdate(&gameMemory, DeviceContext);
+        GameInput input = {};
+
+        Win_HandleMessages(&input);
+        gameUpdate(input);
 
         // Timing
         uint64 endCycleCount = __rdtsc();
@@ -415,6 +424,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
         LastCycleCount = endCycleCount;
         
     }
+
+    // Cleanup
 
     return 0;
 }

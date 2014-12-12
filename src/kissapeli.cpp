@@ -1,67 +1,153 @@
 
 #include "kissapeli.h"
 
-static bool32 gameInitialised = false;
 static Game *game = NULL;
-
-static Color clearColor = {};
+static MemoryStack *memory = NULL;
 
 static float playIndex1 = 0.f;
 static float playIndex2 = 0.f;
 
 
+/**
+ * Order: player1 first, player2 second
+ */
+void padPositionVertices() {
+    PlayerArray *qa = (PlayerArray*)vertexBuffer;
 
-void initGame(MemoryStack *memory) {
+    Pad *p = &game->player1;
+    (*qa)[0] = (float)p->position.x;
+    (*qa)[1] = (float)p->position.y;
 
-    // TODO: Move this to MemoryAllocator for this?
-    game = (Game*)popMemoryStack( memory, sizeof( Game));
+    (*qa)[2] = (float)p->position.x + p->dimensions.x;
+    (*qa)[3] = (float)p->position.y;
 
-    Board board = { boardWidth, boardHeight };
-    Ball ball = { glm::vec2( boardWidth/2, boardHeight/2),
+    (*qa)[4] = (float)p->position.x + p->dimensions.x; 
+    (*qa)[5] = (float)p->position.y + p->dimensions.y;
+
+    (*qa)[6] = (float)p->position.x;
+    (*qa)[7] = (float)p->position.y + p->dimensions.y;
+
+    p = &game->player2;
+    (*qa)[8] = (float)p->position.x; 
+    (*qa)[9] = (float)p->position.y;
+
+    (*qa)[10] = (float) p->position.x + p->dimensions.x; 
+    (*qa)[11] = (float)p->position.y;
+
+    (*qa)[12] = (float)p->position.x + p->dimensions.x; 
+    (*qa)[13] = (float)p->position.y + p->dimensions.y;
+
+    (*qa)[14] = (float)p->position.x; 
+    (*qa)[15] = (float)p->position.y + p->dimensions.y;
+}
+
+
+PlayerColor* padsToColor() {
+    return NULL;
+}
+
+
+
+void initGame() {
+
+    World board = { glm::vec4( ),
+                    glm::vec2( boardWidth, boardHeight )
+    };
+    Ball ball = { glm::vec4(1.f,1.f,1.f,1.f),
+                  glm::vec2( boardWidth/2, boardHeight/2),
                   glm::vec2( 0, 0),
-                  50 };
-
-    Pad player1 = { glm::vec2( padPadding, boardHeight/2 + padInitHeight/2),
-                    padInitWidth, padInitHeight };
-    Pad player2 = { glm::vec2( boardWidth - padPadding, boardHeight/2 + padInitHeight/2),
-                    padInitWidth, padInitHeight };
+                  50 
+    };
+    Pad player1 = { glm::vec4(), 
+                    glm::vec2( padPadding, (float)boardHeight/2.f + padInitHeight/2.f),
+                    glm::vec2(padInitWidth, padInitHeight) 
+    };
+    Pad player2 = { glm::vec4(),
+                    glm::vec2(  boardWidth - padPadding, 
+                                (float)boardHeight/2.f + padInitHeight/2.f),
+                    glm::vec2(padInitWidth, padInitHeight) 
+    };
 
     game->player1 = player1;
     game->player2 = player2;
     game->ball = ball;
     game->board = board;
+}
 
-    gameInitialised = true;
+void gameRender() {
+    draw( game->board.color);
 }
 
 
-void gameRender( HDC DeviceContext) {
+void gameInit( MemoryStack* ms, HDC DeviceContext) {
+    memory = ms;
 
-    draw( clearColor);
-}
+    // TODO: Move this to MemoryAllocator for this?
+    game = (Game*)popMemoryStack( memory, sizeof( Game));
+    vertexBuffer = popMemoryStack( memory, vertexBufferSize);
+    initGame();
+    initRender( vertexBuffer, DeviceContext, boardWidth, boardHeight);
+};
 
- 
-void gameUpdate( MemoryStack* memory, HDC DeviceContext) {
+void HandleInput( GameInput input) {
 
-    if( !gameInitialised) {
-        initRender( DeviceContext);
-        initGame( memory);
+    static GameInput down;
+
+
+    if( input.KEY_W ) {
+        game->player1.position.y += 20;
+    }
+    if( input.KEY_A) {
+        game->player1.position.x -= 20;
+    }
+    if( input.KEY_S) {
+        game->player1.position.y -= 20;
+    }
+    if( input.KEY_D) {
+        game->player1.position.x += 20;
+    }
+    if( input.KEY_UP) {
+        game->player2.position.y += 20;
+    }
+    if( input.KEY_LEFT) {
+        game->player2.position.x -= 20;
+    }
+    if( input.KEY_DOWN) {
+        game->player2.position.y -= 20;
+    }
+    if( input.KEY_RIGHT) {
+        game->player2.position.x += 20;
+
     }
 
+    down = input;
+
+};
+ 
+
+void gameUpdate(GameInput input) {
+
+
     // game stuff
-    playIndex1 += .001f;
-    playIndex2 += .002f;
+    playIndex1 += .00001f;
+    playIndex2 += .00002f;
 
-    clearColor[0] = sin( clearColor[0] + playIndex2);
-    clearColor[1] = sin( clearColor[1] + playIndex1);
-    clearColor[2] = sin( clearColor[2] + playIndex1 + playIndex2);
+    game->board.color =  glm::vec4( 
+                             sin( game->board.color.x + playIndex1),
+                             sin( game->board.color.y + playIndex2),
+                             sin( game->board.color.z + playIndex2 + playIndex1),
+                             0.f
+                         );
+    HandleInput(input);
 
+    padPositionVertices();
     // render
-    gameRender( DeviceContext);
+    gameRender();
 }
 
 
 void resizeCallback( int w, int h) {
     resize(w, h);
 }
+
 
