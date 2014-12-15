@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-//TODO: global for now
-static HDC DeviceContext;
 
 #include "kissapeli.h"
 #include "types.h"

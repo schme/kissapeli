@@ -6,38 +6,42 @@
 #include "render.h"
 #include "memorystack.h"
 
+const static float padPadding = 32;
+const static float padInitWidth = 32;
+const static float padInitHeight = 96; 
 
-const static int boardWidth = 1280;
-const static int boardHeight = 800;
-const static float padPadding = 200;
-const static float padInitWidth = 80;
-const static float padInitHeight = 160; 
+static int boardWidth = 1000;
+static int boardHeight = 600;
+static float ballRadius = 32;
+static float padVelocityMod = 10;
 
-typedef glm::vec2 Square[4];
-typedef glm::vec4 Color;
-typedef Square PadVertices;
+
+/** Rect[0] left bottom, Rect[1] right top*/
+typedef glm::vec2 Rect[2];
+
+enum class Collision { Top, Left, Bottom, Right, No };
+
+struct CollisionEvent {
+    Rect collidable;
+    Collision collision;
+};
 
 
 struct Pad {
-    glm::vec4 color;
     glm::vec2 position;
     glm::vec2 dimensions;
+    glm::vec2 velocity;
 };
-
 
 struct Ball {
-    glm::vec4 color;
     glm::vec2 position;
     glm::vec2 velocity;
-    uint32 radius;
+    float radius;
 };
-
 
 struct World {
-    glm::vec4 color;
     glm::vec2 dimensions;
 };
-
 
 struct Game {
     Pad player1;
@@ -45,7 +49,6 @@ struct Game {
     Ball ball;
     World board;
 };
-
 
 struct GameInput {
     bool32 KEY_W;
@@ -56,11 +59,12 @@ struct GameInput {
     bool32 KEY_LEFT;
     bool32 KEY_DOWN;
     bool32 KEY_RIGHT;
+    bool32 end;
 };
 
 void gameRender();
 void gameUpdate( GameInput);
 void resizeCallback( int w, int h);
-void gameInit( MemoryStack *, HDC);
+void gameInit( MemoryStack *);
 
 #endif // KISSAPELI_H_

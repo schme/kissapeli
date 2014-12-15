@@ -1,5 +1,7 @@
 #version 440
-out vec4 finalColor;
+out vec4 color;
+in vec4 vertColor;
 void main() {
-    finalColor = vec4(0.8, 0.5, 0.0, 1.0);
+
+    color = vertColor;
 }

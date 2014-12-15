@@ -11,12 +11,12 @@ const static int vertexBufferSize = 1024;
 static void *vertexBuffer = NULL;
 
 typedef glm::vec4 Color;
-typedef float PlayerColor[16];
 typedef float PlayerArray[16];
+typedef float GameRectanle[8];
 
-int initRender(void* vertexBuffer, HDC DC, int width, int height);
+int initRender(void* vertexBuffer, int width, int height);
 void resize(int w, int h);
-void draw(Color clearColor);
+void draw(Color clearColor, float, float);
 
 
 #endif // RENDER_H_

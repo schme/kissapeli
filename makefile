@@ -5,7 +5,7 @@ SRCF= src
 SOURCES= $(SRCF)\win_kissapeli.cpp $(SRCF)\kissapeli.cpp $(SRCF)\render.cpp $(SRCF)\memorystack.cpp $(SRCF)\kms_glutils.cpp
 DEFINES= -DGLEW_STATIC
 INCLUDES= /I C:\dxsdk\Include
-LIBS=user32.lib gdi32.lib opengl32.lib glu32.lib glew32s.lib ole32.lib
+LIBS=user32.lib gdi32.lib opengl32.lib glu32.lib glew32s.lib ole32.lib winmm.lib
 
 windows: 
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(DEFINES) $(SOURCES) $(LIBS) -Fekissapeli

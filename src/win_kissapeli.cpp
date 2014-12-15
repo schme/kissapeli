@@ -4,10 +4,14 @@
 #include <wingdi.h>
 #include <xaudio2.h>
 
+const uint64 memoryStackSize = 1024 * 1024;
 
-// check need
+
+//TODO: global for now
+static HDC DeviceContext;
 static HGLRC RenderingContext;
-static bool globalPlaying;
+static bool32 globalPlaying;
+static int64 perfCountFrequency;
 
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
@@ -91,18 +95,44 @@ Win_CreateGLContext()
         OutputDebugStringA( "FAILED: GL 3.x context. Using GL 2.1 or earlier\n");
     }
 
+    if( !RenderingContext) {
+        OutputDebugStringA( "FAILED: Getting RenderingContext\n");
+        return 0;
+    }
+
     /*
     int OpenGLVersion[2];
     glGetIntegerv( GL_MAJOR_VERSION, &OpenGLVersion[0]);
     glGetIntegerv( GL_MINOR_VERSION, &OpenGLVersion[1]);
     */
 
-    if( !RenderingContext) {
-        OutputDebugStringA( "FAILED: Getting RenderingContext\n");
-        return 0;
+    // OpenGL Extensions
+
+    if (wglewIsSupported( "WGL_EXT_swap_control")) {
+        wglSwapIntervalEXT(-1);
+    }  else {
+        wglSwapIntervalEXT(1);
     }
 
     return 1;
+}
+
+
+
+inline LARGE_INTEGER
+Win_GetWallClock() {
+    LARGE_INTEGER Result;
+    QueryPerformanceCounter( &Result);
+    return Result;
+}
+
+
+inline float
+Win_GetSecondsElapsed( LARGE_INTEGER Start, LARGE_INTEGER End)
+{
+    float Result = ((float)(End.QuadPart - Start.QuadPart) /
+                    (float)perfCountFrequency);
+    return Result;
 }
 
 
@@ -176,84 +206,84 @@ Win_HandleMessages(GameInput *input) {
                 globalPlaying = false;
             } break;
                           
-            case WM_SYSKEYDOWN: 
             case WM_SYSKEYUP:
-            case WM_KEYDOWN:
-            case WM_KEYUP: {
+            case WM_KEYUP:
+            case WM_SYSKEYDOWN: 
+            case WM_KEYDOWN: {
 
+                uint32 VKCode = (uint32)Message.wParam;
+                bool32 wasDown = ((Message.lParam & (1 << 30)) != 0);
+                bool32 isDown = ((Message.lParam & (1 << 31)) == 0);
+                if( wasDown != isDown) {
 
-            uint32 VKCode = (uint32)Message.wParam;
-            bool32 wasDown = ((Message.lParam & (1 << 30)) != 0);
-            bool32 isDown = ((Message.lParam & ( 1 << 31)) == 0);
-            if( wasDown != isDown) {
+                    switch (VKCode) { 
+                        case 'W': {
+                            input->KEY_W = 1;
+                            OutputDebugStringA("W ");
+                        } break;
+                        case 'A': {
+                            input->KEY_A = 1;
+                            OutputDebugStringA("A ");
+                        } break;
+                        case 'S': {
+                            input->KEY_S = 1;
+                            OutputDebugStringA("S ");
+                        } break;
+                        case 'D': {
+                            input->KEY_D = 1;
+                            OutputDebugStringA("D ");
+                        } break;
+                        case 'Q': {
 
-                switch (VKCode) { 
-                    case 'W': {
-                        input->KEY_W = 1;
-                        OutputDebugStringA("W ");
-                    } break;
-                    case 'A': {
-                        input->KEY_A = 1;
-                        OutputDebugStringA("A ");
-                    } break;
-                    case 'S': {
-                        input->KEY_S = 1;
-                        OutputDebugStringA("S ");
-                    } break;
-                    case 'D': {
-                        input->KEY_D = 1;
-                        OutputDebugStringA("D ");
-                    } break;
-                    case 'Q': {
+                            OutputDebugStringA("Q ");
+                        } break;
+                        case 'E': {
 
-                        OutputDebugStringA("Q ");
-                    } break;
-                    case 'E': {
+                            OutputDebugStringA("E ");
+                        } break;
+                        case VK_UP: {
 
-                        OutputDebugStringA("E ");
-                    } break;
-                    case VK_UP: {
+                            input->KEY_UP = 1;
+                            OutputDebugStringA("UP ");
+                        } break;
+                        case VK_LEFT: {
 
-                        input->KEY_UP = 1;
-                        OutputDebugStringA("UP ");
-                    } break;
-                    case VK_LEFT: {
+                            input->KEY_LEFT = 1;
+                            OutputDebugStringA("LEFT ");
+                        } break;
+                        case VK_DOWN: {
 
-                        input->KEY_LEFT = 1;
-                        OutputDebugStringA("LEFT ");
-                    } break;
-                    case VK_DOWN: {
+                            input->KEY_DOWN = 1;
+                            OutputDebugStringA("DOWN ");
+                        } break;
+                        case VK_RIGHT: {
 
-                        input->KEY_DOWN = 1;
-                        OutputDebugStringA("DOWN ");
-                    } break;
-                    case VK_RIGHT: {
+                            input->KEY_RIGHT = 1;
+                            OutputDebugStringA("RIGHT ");
+                        } break;
+                        case VK_SPACE: {
+                            
+                            OutputDebugStringA("SPACE ");
+                        } break;
+                        case VK_ESCAPE: {
 
-                        input->KEY_RIGHT = 1;
-                        OutputDebugStringA("RIGHT ");
-                    } break;
-                    case VK_SPACE: {
-                        
-                        OutputDebugStringA("SPACE ");
-                    } break;
-                    case VK_ESCAPE: {
+                            globalPlaying = false;
+                        } break;
+                    } // VKCode
+                } //wasDown != isDown
 
-                        globalPlaying = false;
-                    } break;
+                bool32 AltKeyWasDown = (Message.lParam & (1 << 29));
+                if(( VKCode == VK_F4) && AltKeyWasDown) {
+                    globalPlaying = false;
                 }
-            }
-        
-            bool32 AltKeyWasDown = (Message.lParam & (1 << 29));
-            if(( VKCode == VK_F4) && AltKeyWasDown) {
-                globalPlaying = false;
-            }
 
-        } break;
+            } break;
     
         default: {
             TranslateMessage( &Message);
             DispatchMessageA( &Message);
         } break;
+
         } // switch (Message)
     } // while( PeekMessage())
 }
@@ -269,7 +299,13 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // Timing
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency( &PerfCountFrequencyResult);
-    int64 perfCountFrequency = PerfCountFrequencyResult.QuadPart;
+    perfCountFrequency = PerfCountFrequencyResult.QuadPart;
+
+    bool32 sleepIsGranular = (timeBeginPeriod( 1) == TIMERR_NOERROR);
+    
+#define MonitorRefreshRate 60
+#define GameUpdateHz (MonitorRefreshRate / 2)
+    float targetSecondsPerFrame = 1.0f / (float)GameUpdateHz; 
 
     // WindowClass
     WNDCLASSA WindowClass = {};
@@ -278,7 +314,6 @@ CALLBACK WinMain(   HINSTANCE Instance,
     WindowClass.hInstance = Instance;
     //WindowClass.hIcon;
     WindowClass.lpszClassName = "KissapeliWindowClass";
-
 
     /* XAudio2 */
     WAVEFORMATEXTENSIBLE wfx = {};
@@ -373,19 +408,20 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    /*// play awesome song
+    // play awesome song
     if( FAILED( AudioSourceVoice->Start(0))) {
         OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
         return 0;
-    }*/
+    }
+
+
     // Timing
-    LARGE_INTEGER LastCounter;
-    QueryPerformanceCounter( &LastCounter);
+    LARGE_INTEGER LastCounter = Win_GetWallClock();
     uint64 LastCycleCount = __rdtsc();
 
 
     MemoryStack gameMemory = {};
-    gameMemory.stackSize = 1024*1024;
+    gameMemory.stackSize = memoryStackSize;
     gameMemory.memoryPool = VirtualAlloc( 0, gameMemory.stackSize,
                             MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     gameMemory.top = gameMemory.memoryPool;
@@ -393,35 +429,68 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // TODO: Not like this you idiot.
     assert( gameMemory.memoryPool && " MemoryPool allocation failed!\n");
 
-    gameInit( &gameMemory, DeviceContext);
+    gameInit( &gameMemory);
 
     /**
-     * Main Loop
+     * MainLoop
      */
     while( globalPlaying) {
 
         GameInput input = {};
-
         Win_HandleMessages(&input);
         gameUpdate(input);
 
         // Timing
-        uint64 endCycleCount = __rdtsc();
-        LARGE_INTEGER EndCounter;
-        QueryPerformanceCounter( &EndCounter);
+        
 
+
+        LARGE_INTEGER workCounter = Win_GetWallClock();
+        float workSecondElapsed = Win_GetSecondsElapsed( LastCounter, workCounter);
+        float secondsElapsedForFrame = workSecondElapsed;
+
+
+        if( secondsElapsedForFrame < targetSecondsPerFrame )
+        {
+            if( sleepIsGranular)
+            {
+                DWORD SleepMS = (DWORD)(1000.0f * (targetSecondsPerFrame -
+                                                    secondsElapsedForFrame));
+                if( SleepMS > 0) {
+                    Sleep(SleepMS);
+                }
+            }
+
+            float testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
+            if( testSecondsElapsedForFrame < targetSecondsPerFrame) {
+                //OutputDebugStringA( "Missed sleep\n");
+            }
+        } else {
+            // Logging
+            OutputDebugStringA( "MISSED FRAME\n"); 
+        }
+
+        
+        LARGE_INTEGER EndCounter = Win_GetWallClock();
+        double MSPerFrame = 1000.0f*Win_GetSecondsElapsed( LastCounter, EndCounter);
+        LastCounter = EndCounter;
+
+        SwapBuffers( DeviceContext);
+
+
+        uint64 endCycleCount = __rdtsc();
         uint64 cyclesElapsed = endCycleCount - LastCycleCount;
+        LastCycleCount = endCycleCount;
+
         int64 counterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
-        double MSPerFrame = ((( 1000.0f* (double)counterElapsed) / (double)perfCountFrequency));
+
+
         double FPS = (double)perfCountFrequency / (double)counterElapsed;
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
-/*
+
         char timeStrBuffer[256];
-        sprintf( timeStrBuffer, "%.02fms/f, %0.2ff/s, %.02fmc/f\n", MSPerFrame, FPS, MCPF);
+        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %0.2ff/s, %.02fmc/f\n", MSPerFrame, FPS, MCPF);
         OutputDebugStringA( timeStrBuffer);
-*/
-        LastCounter = EndCounter;
-        LastCycleCount = endCycleCount;
+
         
     }
 

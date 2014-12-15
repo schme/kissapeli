@@ -7,64 +7,203 @@ static MemoryStack *memory = NULL;
 static float playIndex1 = 0.f;
 static float playIndex2 = 0.f;
 
+static Color clearColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
 
-/**
- * Order: player1 first, player2 second
- */
-void padPositionVertices() {
-    PlayerArray *qa = (PlayerArray*)vertexBuffer;
 
-    Pad *p = &game->player1;
-    (*qa)[0] = (float)p->position.x;
-    (*qa)[1] = (float)p->position.y;
+void getRect( Rect *in, Pad *p) {
+    (*in)[0] = p->position;
+    (*in)[1] = p->position + p->dimensions;
+}
 
-    (*qa)[2] = (float)p->position.x + p->dimensions.x;
-    (*qa)[3] = (float)p->position.y;
+void getRect( Rect *in, Ball *b) {
+    (*in)[0] = b->position - b->radius/2;
+    (*in)[1] = b->position + b->radius/2;
+}
 
-    (*qa)[4] = (float)p->position.x + p->dimensions.x; 
-    (*qa)[5] = (float)p->position.y + p->dimensions.y;
-
-    (*qa)[6] = (float)p->position.x;
-    (*qa)[7] = (float)p->position.y + p->dimensions.y;
-
-    p = &game->player2;
-    (*qa)[8] = (float)p->position.x; 
-    (*qa)[9] = (float)p->position.y;
-
-    (*qa)[10] = (float) p->position.x + p->dimensions.x; 
-    (*qa)[11] = (float)p->position.y;
-
-    (*qa)[12] = (float)p->position.x + p->dimensions.x; 
-    (*qa)[13] = (float)p->position.y + p->dimensions.y;
-
-    (*qa)[14] = (float)p->position.x; 
-    (*qa)[15] = (float)p->position.y + p->dimensions.y;
+void getRect( Rect *in, World *w) {
+    (*in)[0] = glm::vec2( 0.f, 0.f);
+    (*in)[1] = w->dimensions;
 }
 
 
-PlayerColor* padsToColor() {
-    return NULL;
+bool32 aabbCollision( Rect *A, Rect *B ) {
+    if( (*A)[0].x < (*B)[1].x &&
+        (*A)[1].x > (*B)[0].x &&
+        (*A)[0].y < (*B)[1].y &&
+        (*A)[1].y > (*B)[0].y ) {
+
+        return 1;
+    }
+    return 0;
+}
+
+
+bool32 circleIntersect( Ball *b, Rect *B) {
+    return 0;
+}
+
+
+void worldCollision( Pad *p, Rect *A) {
+
+    glm::vec2 wDim= game->board.dimensions;
+
+    if ((*A)[0].x < 0) {
+        p->position.x = 0;
+        p->velocity.x = 0;
+    }
+    if ((*A)[1].x > wDim.x) {
+        p->position.x = wDim.x - p->dimensions.x;
+        p->velocity.x = 0;
+    }
+    if ((*A)[0].y < 0) {
+        p->position.y = 0;
+        p->velocity.y = 0;
+    }
+    if ((*A)[1].y > wDim.y) {
+        p->position.y = wDim.y - p->dimensions.y;
+        p->velocity.y = 0;
+    }
+}
+
+
+void worldCollision( Ball *b, Rect *A) {
+
+    glm::vec2 wDim= game->board.dimensions;
+
+    if ((*A)[0].x < 0) {
+        b->position.x = b->radius / 2.f;
+        b->velocity.x = -(b->velocity.x);
+    }
+    if ((*A)[1].x > wDim.x) {
+        b->position.x = wDim.x - b->radius / 2.f;
+        b->velocity.x = -(b->velocity.x);
+    }
+    if ((*A)[0].y < 0) {
+        b->position.y = b->radius / 2.f;
+        b->velocity.y = -(b->velocity.y);
+    }
+    if ((*A)[1].y > wDim.y) {
+        b->position.y = wDim.y - b->radius / 2.f;
+        b->velocity.y = -(b->velocity.y);
+    }
+}
+
+
+void applyVelocities() {
+
+    game->player1.position += game->player1.velocity;
+    game->player2.position += game->player2.velocity;
+    game->ball.position += game->ball.velocity;
+
+}
+
+
+void collisions() {
+
+    Pad *player1 = &game->player1;
+    Pad *player2 = &game->player2;
+    Ball *ball = &game->ball;
+
+    Rect rectPlayer1;
+    Rect rectPlayer2;
+    Rect rectBall;
+
+    getRect( &rectPlayer1, player1);
+    getRect( &rectPlayer2, player2);
+    getRect( &rectBall, ball);
+
+    assert( rectPlayer1 && "rectPlayer1 is null");
+    assert( rectPlayer2 && "rectPlayer2 is null");
+    assert( rectBall && "rectBall is null");
+
+    worldCollision( player1, &rectPlayer1);
+    worldCollision( player2, &rectPlayer2);
+    worldCollision( ball, &rectBall);
+
+    /** collisionHandling for my balls */
+    if( aabbCollision( &rectBall, &rectPlayer1) ||
+        aabbCollision( &rectBall, &rectPlayer2) ) {
+
+        ball->position -= ball->velocity;
+        ball->velocity.x = -ball->velocity.x;
+    }
+}
+
+
+void runSimulation() {
+    applyVelocities();
+    collisions();
+}
+
+/**
+ * Order: background, player1 , player2 
+ */
+void gameVertices() {
+
+    char* index = (char*)vertexBuffer;
+    
+    float vb[] = { 0.f, 0.f,
+                   game->board.dimensions.x, 0.f,
+                   game->board.dimensions.x, game->board.dimensions.y,
+                   0.f, game->board.dimensions.y };
+    memcpy( index, vb, sizeof( vb));
+    index += sizeof( vb);
+
+    PlayerArray *qa = (PlayerArray*)index;
+
+    Pad *p = &game->player1;
+    (*qa)[0] = p->position.x;
+    (*qa)[1] = p->position.y;
+
+    (*qa)[2] = p->position.x + p->dimensions.x;
+    (*qa)[3] = p->position.y;
+
+    (*qa)[4] = p->position.x + p->dimensions.x; 
+    (*qa)[5] = p->position.y + p->dimensions.y;
+
+    (*qa)[6] = p->position.x;
+    (*qa)[7] = p->position.y + p->dimensions.y;
+
+    p = &game->player2;
+    (*qa)[8] = p->position.x; 
+    (*qa)[9] = p->position.y;
+
+    (*qa)[10] =p->position.x + p->dimensions.x; 
+    (*qa)[11] =p->position.y;
+
+    (*qa)[12] =p->position.x + p->dimensions.x; 
+    (*qa)[13] =p->position.y + p->dimensions.y;
+
+    (*qa)[14] =p->position.x; 
+    (*qa)[15] =p->position.y + p->dimensions.y;
+
+    index += sizeof( PlayerArray);
+
+    Ball *b = &game->ball;
+    float vball[] = { b->position.x - b->radius/2, b->position.y - b->radius/2,
+                      b->position.x + b->radius/2, b->position.y - b->radius/2,
+                      b->position.x + b->radius/2, b->position.y + b->radius/2,
+                      b->position.x - b->radius/2, b->position.y + b->radius/2 };
+
+    memcpy( index, vball, sizeof(vball));
+
 }
 
 
 
 void initGame() {
 
-    World board = { glm::vec4( ),
-                    glm::vec2( boardWidth, boardHeight )
+    World board = { glm::vec2( boardWidth, boardHeight ) };
+
+    Ball ball = { glm::vec2( boardWidth/2, boardHeight/2),
+                  glm::vec2( 3.3f, 7.1f),
+                  ballRadius
     };
-    Ball ball = { glm::vec4(1.f,1.f,1.f,1.f),
-                  glm::vec2( boardWidth/2, boardHeight/2),
-                  glm::vec2( 0, 0),
-                  50 
-    };
-    Pad player1 = { glm::vec4(), 
-                    glm::vec2( padPadding, (float)boardHeight/2.f + padInitHeight/2.f),
+    Pad player1 = { glm::vec2( padPadding, (float)boardHeight/2.f - padInitHeight/2.f),
                     glm::vec2(padInitWidth, padInitHeight) 
     };
-    Pad player2 = { glm::vec4(),
-                    glm::vec2(  boardWidth - padPadding, 
-                                (float)boardHeight/2.f + padInitHeight/2.f),
+    Pad player2 = { glm::vec2(  boardWidth - padPadding - padInitWidth, 
+                                (float)boardHeight/2.f - padInitHeight/2.f),
                     glm::vec2(padInitWidth, padInitHeight) 
     };
 
@@ -75,72 +214,111 @@ void initGame() {
 }
 
 void gameRender() {
-    draw( game->board.color);
+    gameVertices();
+    draw(clearColor, playIndex1, playIndex2);
 }
 
 
-void gameInit( MemoryStack* ms, HDC DeviceContext) {
+void gameInit( MemoryStack* ms) {
     memory = ms;
 
     // TODO: Move this to MemoryAllocator for this?
     game = (Game*)popMemoryStack( memory, sizeof( Game));
     vertexBuffer = popMemoryStack( memory, vertexBufferSize);
     initGame();
-    initRender( vertexBuffer, DeviceContext, boardWidth, boardHeight);
+    initRender( vertexBuffer, boardWidth, boardHeight);
 };
+
+void changeInputStates( GameInput *state, GameInput input) {
+
+    if( input.KEY_W ) {
+        (*state).KEY_W = !(*state).KEY_W;
+    } 
+    if( input.KEY_S) {
+        (*state).KEY_S = !(*state).KEY_S;
+    } 
+    if( input.KEY_A) {
+        (*state).KEY_A = !(*state).KEY_A;
+    } 
+    if( input.KEY_D) {
+        (*state).KEY_D = !(*state).KEY_D;
+    } 
+    if( input.KEY_UP) {
+        (*state).KEY_UP = !(*state).KEY_UP;
+    } 
+    if( input.KEY_DOWN) {
+        (*state).KEY_DOWN = !(*state).KEY_DOWN;
+    } 
+    if( input.KEY_LEFT) {
+        (*state).KEY_LEFT = !(*state).KEY_LEFT;
+    } 
+    if( input.KEY_RIGHT) {
+        (*state).KEY_RIGHT = !(*state).KEY_RIGHT;
+    }
+
+}
+
 
 void HandleInput( GameInput input) {
 
-    static GameInput down;
+    static GameInput state;
+
+    /** Change state */
+    changeInputStates( &state, input);
+
+    /** Player1 **/
+    if( state.KEY_W) {
+        game->player1.velocity.y = padVelocityMod;
+    } else if( state.KEY_S) {
+        game->player1.velocity.y = -padVelocityMod;
+    } else {
+        game->player1.velocity.y = 0;
+    }
 
 
-    if( input.KEY_W ) {
-        game->player1.position.y += 20;
-    }
-    if( input.KEY_A) {
-        game->player1.position.x -= 20;
-    }
-    if( input.KEY_S) {
-        game->player1.position.y -= 20;
-    }
-    if( input.KEY_D) {
-        game->player1.position.x += 20;
-    }
-    if( input.KEY_UP) {
-        game->player2.position.y += 20;
-    }
-    if( input.KEY_LEFT) {
-        game->player2.position.x -= 20;
-    }
-    if( input.KEY_DOWN) {
-        game->player2.position.y -= 20;
-    }
-    if( input.KEY_RIGHT) {
-        game->player2.position.x += 20;
-
+    if( state.KEY_A) {
+        game->player1.velocity.x = -padVelocityMod;
+    } else if( state.KEY_D) {
+        game->player1.velocity.x = padVelocityMod;
+    } else {
+        game->player1.velocity.x = 0.f;
     }
 
-    down = input;
+
+    /** Player2 **/
+    if( state.KEY_UP) {
+        game->player2.velocity.y = padVelocityMod;
+    } else if( state.KEY_DOWN) {
+        game->player2.velocity.y = -padVelocityMod;
+    } else {
+        game->player2.velocity.y = 0.f;
+    }
+
+    if( state.KEY_LEFT) {
+        game->player2.velocity.x = -padVelocityMod;
+    } else if( state.KEY_RIGHT) {
+        game->player2.velocity.x = padVelocityMod;
+    } else {
+        game->player2.velocity.x = 0.f;
+    }
 
 };
  
 
 void gameUpdate(GameInput input) {
 
+    playIndex1 += 0.10f;
+    playIndex2 += 0.20f;
+
+    
+    clearColor.r = sin( playIndex1);
+    clearColor.g = sin( playIndex2);
+    clearColor.b = sin( playIndex1 + playIndex2);
 
     // game stuff
-    playIndex1 += .00001f;
-    playIndex2 += .00002f;
-
-    game->board.color =  glm::vec4( 
-                             sin( game->board.color.x + playIndex1),
-                             sin( game->board.color.y + playIndex2),
-                             sin( game->board.color.z + playIndex2 + playIndex1),
-                             0.f
-                         );
     HandleInput(input);
+    runSimulation();
 
-    padPositionVertices();
     // render
     gameRender();
 }

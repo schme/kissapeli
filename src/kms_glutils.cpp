@@ -6,6 +6,7 @@ namespace kms {
 std::string fileToString( const char *filename) {
     std::ifstream file( filename);
     if( !file.is_open()) {
+        assert( 0 && "FAIL: Opening file ");
         std::string msg("FAIL: Opening file: ");
         msg += filename; msg += "\n";
         OUTPUTDEBUG( msg.c_str() );
@@ -25,6 +26,12 @@ GLint loadShader( const char *filename, GLenum shaderType) {
     GLuint shaderObject = glCreateShader( shaderType);
     glShaderSource( shaderObject, 1, (const GLchar**)&shader, NULL);
     glCompileShader( shaderObject);
+    
+    GLint status;
+    glGetShaderiv( shaderObject, GL_COMPILE_STATUS, &status);
+    if( status == GL_FALSE) {
+        assert(0 && "Shader didn't compile!");
+    }
 
     return shaderObject;
 }
@@ -45,6 +52,7 @@ GLint createProgram( std::vector<GLint> &shaders) {
     GLint status;
     glGetProgramiv( shaderProgram, GL_LINK_STATUS, &status);
     if( status == GL_FALSE) {
+        assert(0 && "Shader linking failed!\n");
         std::string msg( "Program linking failure: " );
 
         GLint infoLogLength;

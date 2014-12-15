@@ -4,15 +4,15 @@
 #include <fstream>
 #include <sstream>
 
-HDC DeviceContext = {};
-
 static GLuint shaderProgram = 0;
 static GLuint vbo = 0;
 static GLuint vao = 0;
+
 static float screenWidth = 0;
 static float screenHeight = 0;
 
 GLuint screenSizeUnif;
+GLuint playIndexUnif;
 
 void initVertexBuffer() {
     
@@ -24,28 +24,29 @@ void initVertexBuffer() {
 
 }
 
-int initRender( void* vertBuf, HDC dc, int width, int height ) {
+int initRender( void* vertBuf, int width, int height ) {
 
-    DeviceContext = dc;
     vertexBuffer = vertBuf;    
     screenWidth = (float)width;
     screenHeight = (float)height;
 
     std::vector<GLint> shaders;
     shaders.push_back(kms::loadShader( SHADERPATH("min.vert"), GL_VERTEX_SHADER));
-    shaders.push_back(kms::loadShader( SHADERPATH("min.frag"), GL_FRAGMENT_SHADER));
+    shaders.push_back(kms::loadShader( SHADERPATH("round.frag"), GL_FRAGMENT_SHADER));
 
     shaderProgram = kms::createProgram( shaders);
     if( !shaderProgram) {
+        assert(0 && "No Shader Program!\n");
         return 0;
     }
 
     glUseProgram( shaderProgram);
     screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize"); 
+    playIndexUnif = glGetUniformLocation( shaderProgram, "playIndex"); 
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUseProgram(0);
-    
 
+    glClearColor( 0.5f, 1.0f, 0.2f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -58,25 +59,26 @@ int initRender( void* vertBuf, HDC dc, int width, int height ) {
 }
 
 
-void draw(Color clearColor) {
+void draw(Color clearColor, float playIndex1, float playIndex2 ) {
 
-    glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+    glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a);
     glClear( GL_COLOR_BUFFER_BIT);
 
     glUseProgram( shaderProgram);
 
+
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
-    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof( PlayerArray), vertexBuffer);
+    glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-    glDrawArrays( GL_QUADS, 0, 16);
+    glUniform2f( playIndexUnif, clearColor.g, clearColor.b);
+    // TODO: Change to triangles
+    glDrawArrays( GL_QUADS, 0, 32);
 
     glDisableVertexAttribArray(0);
     glUseProgram(0);
-
-    SwapBuffers( DeviceContext);
 }
 
 
