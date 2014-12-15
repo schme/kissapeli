@@ -408,11 +408,11 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    // play awesome song
+    /*// play awesome song
     if( FAILED( AudioSourceVoice->Start(0))) {
         OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
         return 0;
-    }
+    }*/
 
 
     // Timing

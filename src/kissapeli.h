@@ -1,19 +1,29 @@
 #ifndef KISSAPELI_H_
 #define KISSAPELI_H_
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "types.h"
 #include "render.h"
 #include "memorystack.h"
 
-const static float padPadding = 32;
-const static float padInitWidth = 32;
-const static float padInitHeight = 96; 
+
+const float padPadding = 32;
+const float padInitWidth = 32;
+const float padInitHeight = 96; 
+const int ballInitSpeed = 15;
 
 static int boardWidth = 1000;
 static int boardHeight = 600;
-static float ballRadius = 32;
+static float ballRadius = 12;
 static float padVelocityMod = 10;
+
+
+static glm::vec4 p1ShaderColor = glm::vec4( 1.f, 0.f, 0.f, 1.f);
+static glm::vec4 p2ShaderColor = glm::vec4( 0.f, 1.f, 0.f, 1.f);
+static glm::vec4 bShaderColor = glm::vec4( 0.f, 0.f, 1.f, 1.f);
+static glm::vec4 bgShaderColor = glm::vec4( .1f, .1f, .1f, 1.f);
 
 
 /** Rect[0] left bottom, Rect[1] right top*/

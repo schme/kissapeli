@@ -4,20 +4,17 @@
 static Game *game = NULL;
 static MemoryStack *memory = NULL;
 
-static float playIndex1 = 0.f;
-static float playIndex2 = 0.f;
-
 static Color clearColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
 
 
 void getRect( Rect *in, Pad *p) {
-    (*in)[0] = p->position;
-    (*in)[1] = p->position + p->dimensions;
+    (*in)[0] = p->position + p->velocity;
+    (*in)[1] = p->position + p->dimensions + p->velocity;
 }
 
 void getRect( Rect *in, Ball *b) {
-    (*in)[0] = b->position - b->radius/2;
-    (*in)[1] = b->position + b->radius/2;
+    (*in)[0] = b->position - b->radius/2 + b->velocity;
+    (*in)[1] = b->position + b->radius/2 + b->velocity;
 }
 
 void getRect( Rect *in, World *w) {
@@ -27,19 +24,10 @@ void getRect( Rect *in, World *w) {
 
 
 bool32 aabbCollision( Rect *A, Rect *B ) {
-    if( (*A)[0].x < (*B)[1].x &&
-        (*A)[1].x > (*B)[0].x &&
-        (*A)[0].y < (*B)[1].y &&
-        (*A)[1].y > (*B)[0].y ) {
-
-        return 1;
-    }
-    return 0;
-}
-
-
-bool32 circleIntersect( Ball *b, Rect *B) {
-    return 0;
+    return ((*A)[0].x < (*B)[1].x &&
+            (*A)[1].x > (*B)[0].x &&
+            (*A)[0].y < (*B)[1].y &&
+            (*A)[1].y > (*B)[0].y );
 }
 
 
@@ -97,6 +85,24 @@ void applyVelocities() {
 
 }
 
+void ballRectCollision( Rect *rectBall, Rect *rectPad) {
+
+    if( aabbCollision( rectBall, rectPad)) {
+
+        Ball *ball = &game->ball;
+        bool32 rightSide = ball->position.x > game->board.dimensions.x/2;
+
+        if (ball->position.y >= (*rectPad)[1].y) {
+
+            ball->velocity.y = -ball->velocity.y;
+        } else if (ball->position.y <= (*rectPad)[0].y ) {
+
+            ball->velocity.y = -ball->velocity.y;
+        } else {
+            ball->velocity.x = -ball->velocity.x;
+        }
+    }
+}
 
 void collisions() {
 
@@ -121,18 +127,15 @@ void collisions() {
     worldCollision( ball, &rectBall);
 
     /** collisionHandling for my balls */
-    if( aabbCollision( &rectBall, &rectPlayer1) ||
-        aabbCollision( &rectBall, &rectPlayer2) ) {
+    ballRectCollision( &rectBall, &rectPlayer1);
+    ballRectCollision( &rectBall, &rectPlayer2);
 
-        ball->position -= ball->velocity;
-        ball->velocity.x = -ball->velocity.x;
-    }
 }
 
 
 void runSimulation() {
-    applyVelocities();
     collisions();
+    applyVelocities();
 }
 
 /**
@@ -187,16 +190,47 @@ void gameVertices() {
 
     memcpy( index, vball, sizeof(vball));
 
+    index += sizeof( vball);
+
+
+    //TODO: This is a bit ugly pls do something
+    float colors[] = { 
+        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
+        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
+        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
+        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
+
+        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
+        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
+        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
+        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
+
+        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
+        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
+        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
+        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
+
+        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
+        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
+        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
+        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
+    };
+
+    memcpy( index, colors, sizeof(colors));
+
 }
 
 
 
 void initGame() {
 
+    srand((unsigned)time(NULL));
+    //int random = rand() % ballInitSpeed + 1;
+
     World board = { glm::vec2( boardWidth, boardHeight ) };
 
     Ball ball = { glm::vec2( boardWidth/2, boardHeight/2),
-                  glm::vec2( 3.3f, 7.1f),
+                  glm::vec2( ballInitSpeed/2.f, ballInitSpeed/2.f),
                   ballRadius
     };
     Pad player1 = { glm::vec2( padPadding, (float)boardHeight/2.f - padInitHeight/2.f),
@@ -215,7 +249,7 @@ void initGame() {
 
 void gameRender() {
     gameVertices();
-    draw(clearColor, playIndex1, playIndex2);
+    draw();
 }
 
 
@@ -276,13 +310,13 @@ void HandleInput( GameInput input) {
     }
 
 
-    if( state.KEY_A) {
-        game->player1.velocity.x = -padVelocityMod;
-    } else if( state.KEY_D) {
-        game->player1.velocity.x = padVelocityMod;
-    } else {
-        game->player1.velocity.x = 0.f;
-    }
+    //if( state.KEY_A) {
+        //game->player1.velocity.x = -padVelocityMod;
+    //} else if( state.KEY_D) {
+        //game->player1.velocity.x = padVelocityMod;
+    //} else {
+        //game->player1.velocity.x = 0.f;
+    //}
 
 
     /** Player2 **/
@@ -294,26 +328,19 @@ void HandleInput( GameInput input) {
         game->player2.velocity.y = 0.f;
     }
 
-    if( state.KEY_LEFT) {
-        game->player2.velocity.x = -padVelocityMod;
-    } else if( state.KEY_RIGHT) {
-        game->player2.velocity.x = padVelocityMod;
-    } else {
-        game->player2.velocity.x = 0.f;
-    }
+    //if( state.KEY_LEFT) {
+        //game->player2.velocity.x = -padVelocityMod;
+    //} else if( state.KEY_RIGHT) {
+        //game->player2.velocity.x = padVelocityMod;
+    //} else {
+        //game->player2.velocity.x = 0.f;
+    //}
 
 };
  
 
 void gameUpdate(GameInput input) {
 
-    playIndex1 += 0.10f;
-    playIndex2 += 0.20f;
-
-    
-    clearColor.r = sin( playIndex1);
-    clearColor.g = sin( playIndex2);
-    clearColor.b = sin( playIndex1 + playIndex2);
 
     // game stuff
     HandleInput(input);
@@ -325,6 +352,10 @@ void gameUpdate(GameInput input) {
 
 
 void resizeCallback( int w, int h) {
+    if( game) {
+        game->board.dimensions.x = (float)w;
+        game->board.dimensions.y = (float)h;
+    }
     resize(w, h);
 }
 
