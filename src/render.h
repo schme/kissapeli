@@ -3,7 +3,6 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
-#include <glm/gtx/compatibility.hpp>
 
 #include "types.h"
 #include "kms.h"

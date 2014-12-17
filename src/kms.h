@@ -23,5 +23,10 @@
     OutputDebugStringA( buffer );\
 }
 
-
+#define WIN_OUTPUTDEBUG_I( msg, val )\
+{\
+    char buffer[DEBUG_STRING_SIZE];\
+    _snprintf_s( buffer, DEBUG_STRING_SIZE, "%s%d\n", msg, val);\
+    OutputDebugStringA( buffer );\
+}
 #endif // KMS_H_

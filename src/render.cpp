@@ -14,7 +14,7 @@ static float screenHeight = 0;
 static uint32 vertexDataSize = 32 * sizeof(float);
 
 GLuint screenSizeUnif;
-GLuint timeUnif;
+GLuint frameUnif;
 
 void initVertexBuffer() {
     
@@ -44,14 +44,17 @@ int initRender( void* vertBuf, int width, int height ) {
 
     glUseProgram( shaderProgram);
     screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize"); 
-    timeUnif = glGetUniformLocation( shaderProgram, "timeUnif"); 
+    frameUnif = glGetUniformLocation( shaderProgram, "frame"); 
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUseProgram(0);
 
-    glClearColor( 0.5f, 0.5f, 0.0f, 1.0f);
+    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+    glEnable( GL_BLEND);
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable( GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -63,10 +66,11 @@ int initRender( void* vertBuf, int width, int height ) {
 
 void draw(uint64 frame) {
 
+
     glClear( GL_COLOR_BUFFER_BIT);
     glUseProgram( shaderProgram);
 
-    glUniform1i( timeUnif, (GLint)frame);
+    glUniform1i( frameUnif, (GLint)frame);
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
