@@ -3,7 +3,9 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <glm/gtx/compatibility.hpp>
 
+#include "types.h"
 #include "kms.h"
 #include "kms_glutils.h"
 
@@ -16,7 +18,7 @@ typedef float GameRectangle[8];
 
 int initRender(void* vertexBuffer, int width, int height);
 void resize(int w, int h);
-void draw();
+void draw(uint64 frame);
 
 
 #endif // RENDER_H_

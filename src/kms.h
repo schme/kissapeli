@@ -16,10 +16,12 @@
 #define OUTPUTDEBUG( msg)\
     fprintf( stderr, "%s", msg )
 
-#define WIN_OUTPUTDEBUG( msg )\
+#define WIN_OUTPUTDEBUG_F( msg, val )\
+{\
     char buffer[DEBUG_STRING_SIZE];\
-    snprintf( buffer, DEBUG_STRING_SIZE, "%s", msg);\
-    OutputDebugStringA( msg );
+    _snprintf_s( buffer, DEBUG_STRING_SIZE, "%s%f\n", msg, val);\
+    OutputDebugStringA( buffer );\
+}
 
 
 #endif // KMS_H_

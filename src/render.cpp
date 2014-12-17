@@ -10,6 +10,8 @@ static GLuint vao = 0;
 
 static float screenWidth = 0;
 static float screenHeight = 0;
+// 2 floats * 4 corners * ( board, 2 pads, ball )
+static uint32 vertexDataSize = 32 * sizeof(float);
 
 GLuint screenSizeUnif;
 GLuint timeUnif;
@@ -59,10 +61,13 @@ int initRender( void* vertBuf, int width, int height ) {
 }
 
 
-void draw() {
+void draw(uint64 frame) {
 
     glClear( GL_COLOR_BUFFER_BIT);
     glUseProgram( shaderProgram);
+
+    glUniform1i( timeUnif, (GLint)frame);
+    glUniform2f( screenSizeUnif, screenWidth, screenHeight);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
     glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);
@@ -70,10 +75,10 @@ void draw() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof( PlayerArray) + sizeof( GameRectangle)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(vertexDataSize));
 
     // TODO: Change to triangles
-    glDrawArrays( GL_QUADS, 0, 32);
+    glDrawArrays( GL_QUADS, 0, 16);
 
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
@@ -85,5 +90,5 @@ void resize( int w, int h) {
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
     screenWidth = (float)w;
     screenHeight = (float)h;
-    glUniform2f( screenSizeUnif,  screenWidth, screenHeight);
+    glUniform2f( screenSizeUnif, screenWidth, screenHeight);
 };

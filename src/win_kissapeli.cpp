@@ -12,6 +12,7 @@ static HDC DeviceContext;
 static HGLRC RenderingContext;
 static bool32 globalPlaying;
 static int64 perfCountFrequency;
+static uint64 frame;
 
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
@@ -108,11 +109,11 @@ Win_CreateGLContext()
 
     // OpenGL Extensions
 
-    if (wglewIsSupported( "WGL_EXT_swap_control")) {
-        wglSwapIntervalEXT(-1);
-    }  else {
-        wglSwapIntervalEXT(1);
-    }
+    //if (wglewIsSupported( "WGL_EXT_swap_control")) {
+        //wglSwapIntervalEXT(1);
+    //}  else {
+        //wglSwapIntervalEXT(1);
+    //}
 
     return 1;
 }
@@ -219,51 +220,51 @@ Win_HandleMessages(GameInput *input) {
                     switch (VKCode) { 
                         case 'W': {
                             input->KEY_W = 1;
-                            OutputDebugStringA("W ");
+                            //OutputDebugStringA("W \n");
                         } break;
                         case 'A': {
                             input->KEY_A = 1;
-                            OutputDebugStringA("A ");
+                            //OutputDebugStringA("A \n");
                         } break;
                         case 'S': {
                             input->KEY_S = 1;
-                            OutputDebugStringA("S ");
+                            //OutputDebugStringA("S \n");
                         } break;
                         case 'D': {
                             input->KEY_D = 1;
-                            OutputDebugStringA("D ");
+                            //OutputDebugStringA("D \n");
                         } break;
                         case 'Q': {
 
-                            OutputDebugStringA("Q ");
+                            //OutputDebugStringA("Q \n");
                         } break;
                         case 'E': {
 
-                            OutputDebugStringA("E ");
+                            //OutputDebugStringA("E \n");
                         } break;
                         case VK_UP: {
 
                             input->KEY_UP = 1;
-                            OutputDebugStringA("UP ");
+                            //OutputDebugStringA("UP \n");
                         } break;
                         case VK_LEFT: {
 
                             input->KEY_LEFT = 1;
-                            OutputDebugStringA("LEFT ");
+                            //OutputDebugStringA("LEFT \n");
                         } break;
                         case VK_DOWN: {
 
                             input->KEY_DOWN = 1;
-                            OutputDebugStringA("DOWN ");
+                            //OutputDebugStringA("DOWN \n");
                         } break;
                         case VK_RIGHT: {
 
                             input->KEY_RIGHT = 1;
-                            OutputDebugStringA("RIGHT ");
+                            //OutputDebugStringA("RIGHT \n");
                         } break;
                         case VK_SPACE: {
                             
-                            OutputDebugStringA("SPACE ");
+                            OutputDebugStringA("SPACE \n");
                         } break;
                         case VK_ESCAPE: {
 
@@ -304,7 +305,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
     bool32 sleepIsGranular = (timeBeginPeriod( 1) == TIMERR_NOERROR);
     
 #define MonitorRefreshRate 60
-#define GameUpdateHz (MonitorRefreshRate / 2)
+#define GameUpdateHz (MonitorRefreshRate)
     float targetSecondsPerFrame = 1.0f / (float)GameUpdateHz; 
 
     // WindowClass
@@ -438,6 +439,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         GameInput input = {};
         Win_HandleMessages(&input);
+        input.frame = frame;
+
         gameUpdate(input);
 
         // Timing
@@ -487,10 +490,12 @@ CALLBACK WinMain(   HINSTANCE Instance,
         double FPS = (double)perfCountFrequency / (double)counterElapsed;
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
-        char timeStrBuffer[256];
-        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %0.2ff/s, %.02fmc/f\n", MSPerFrame, FPS, MCPF);
-        OutputDebugStringA( timeStrBuffer);
+        //char timeStrBuffer[256];
+        ////_snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %0.2ff/s, %.02fmc/f\n", MSPerFrame, FPS, MCPF);
+        //_snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", MSPerFrame, MCPF);
+        //OutputDebugStringA( timeStrBuffer);
 
+        ++frame;
         
     }
 

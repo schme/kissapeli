@@ -1,6 +1,6 @@
 #ifndef KISSAPELI_H_
 #define KISSAPELI_H_
-#include <math.h>
+#include <cmath>    // for floating point abs()
 #include <stdlib.h>
 #include <time.h>
 
@@ -8,16 +8,18 @@
 #include "render.h"
 #include "memorystack.h"
 
+const float padPadding = 128;
+const float padInitWidth = 12;
+const float padInitHeight = 32; 
+const float ballXSpeed = 5;
+const float ballYSpeed = 3;
+const float ballEnglishMax = 4;
 
-const float padPadding = 32;
-const float padInitWidth = 32;
-const float padInitHeight = 96; 
-const int ballInitSpeed = 15;
-
-static int boardWidth = 1000;
-static int boardHeight = 600;
+static int boardWidth = 1024;
+static int boardHeight = 512;
 static float ballRadius = 12;
 static float padVelocityMod = 10;
+
 
 
 static glm::vec4 p1ShaderColor = glm::vec4( 1.f, 0.f, 0.f, 1.f);
@@ -70,6 +72,7 @@ struct GameInput {
     bool32 KEY_DOWN;
     bool32 KEY_RIGHT;
     bool32 end;
+    uint64 frame;
 };
 
 void gameRender();

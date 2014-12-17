@@ -85,22 +85,33 @@ void applyVelocities() {
 
 }
 
+    
 void ballRectCollision( Rect *rectBall, Rect *rectPad) {
 
     if( aabbCollision( rectBall, rectPad)) {
 
         Ball *ball = &game->ball;
-        bool32 rightSide = ball->position.x > game->board.dimensions.x/2;
+        bool32 rightSide = ball->position.x > game->board.dimensions.x/2.f;
 
-        if (ball->position.y >= (*rectPad)[1].y) {
+        float padMiddlePos = (((*rectPad)[1].y - (*rectPad)[0].y) / 2.f) + (*rectPad)[0].y;
+        float english = ballEnglishMax * std::abs( ball->position.y - padMiddlePos ) / ((*rectPad)[1].y - padMiddlePos);
+
+        int velSign = ball->velocity.y < 0 ? -1 : 1;
+        ball->velocity.y = velSign * (ballYSpeed + english);
+
+        //WIN_OUTPUTDEBUG_F( "\nenglish ", english);
+        //WIN_OUTPUTDEBUG_F( "padMiddlePos ", padMiddlePos);
+        //WIN_OUTPUTDEBUG_F( "ball->position.y ", ball->position.y);
+        //WIN_OUTPUTDEBUG_F( "ball->velocity.y ", ball->velocity.y);
+
+        if (ball->position.y >= (*rectPad)[1].y || 
+            ball->position.y <= (*rectPad)[0].y ) {
 
             ball->velocity.y = -ball->velocity.y;
-        } else if (ball->position.y <= (*rectPad)[0].y ) {
-
-            ball->velocity.y = -ball->velocity.y;
-        } else {
-            ball->velocity.x = -ball->velocity.x;
         }
+
+        ball->velocity.x = ( rightSide) ? -std::abs(ball->velocity.x) :
+                                            std::abs( ball->velocity.x);
     }
 }
 
@@ -193,7 +204,7 @@ void gameVertices() {
     index += sizeof( vball);
 
 
-    //TODO: This is a bit ugly pls do something
+    //TODO: This is ugly pls do something
     float colors[] = { 
         bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
         bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
@@ -225,12 +236,13 @@ void gameVertices() {
 void initGame() {
 
     srand((unsigned)time(NULL));
-    //int random = rand() % ballInitSpeed + 1;
+    int random = rand() / RAND_MAX;
 
     World board = { glm::vec2( boardWidth, boardHeight ) };
 
-    Ball ball = { glm::vec2( boardWidth/2, boardHeight/2),
-                  glm::vec2( ballInitSpeed/2.f, ballInitSpeed/2.f),
+    Ball ball = { glm::vec2( boardWidth/2.f, boardHeight/2.f),
+                  glm::vec2( (random < RAND_MAX/2) ? -ballXSpeed : ballXSpeed,
+                             (random < RAND_MAX/2) ? -ballYSpeed : ballYSpeed),
                   ballRadius
     };
     Pad player1 = { glm::vec2( padPadding, (float)boardHeight/2.f - padInitHeight/2.f),
@@ -247,11 +259,13 @@ void initGame() {
     game->board = board;
 }
 
-void gameRender() {
+void gameRender(uint64 frame) {
     gameVertices();
-    draw();
+    draw( frame);
 }
 
+void gameRender() {
+}
 
 void gameInit( MemoryStack* ms) {
     memory = ms;
@@ -347,7 +361,7 @@ void gameUpdate(GameInput input) {
     runSimulation();
 
     // render
-    gameRender();
+    gameRender( input.frame);
 }
 
 

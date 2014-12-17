@@ -14,14 +14,6 @@ void main() {
     clipPos = clipPos / (screenSize/2.0);
 
 
-    if( clipPos == vec2(-1.0,-1.0) ||
-        clipPos == vec2(-1.0,1.0) ||
-        clipPos == vec2(1.0,-1.0) ||
-        clipPos == vec2(1.0,1.0)) {
 
-        gl_Position = vec4( clipPos, 0.7, 1.0);
-    } else {
-
-        gl_Position = vec4( clipPos, 0.8, 1.0);
-    }
+    gl_Position = vec4( clipPos, 1.0, 1.0);
 }
