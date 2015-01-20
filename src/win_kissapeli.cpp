@@ -4,10 +4,9 @@
 #include <wingdi.h>
 #include <xaudio2.h>
 
-const uint64 memoryStackSize = 1024 * 1024;
+const uint64 memoryStackSize = 4*1024;
 
 
-//TODO: global for now
 static HDC DeviceContext;
 static HGLRC RenderingContext;
 static bool32 globalPlaying;
@@ -57,7 +56,7 @@ Win_CreateGLContext()
         24,                             /* depth buffer */
         8,                              /* no stencil buffer */
         0,                              /* no auxiliary buffers */
-        PFD_MAIN_PLANE,                 /* main layer */
+        0,                              /* main layer */
         0,                              /* reserved */
         0, 0, 0,                        /* no layer, visible, damage masks */
     };
@@ -101,11 +100,9 @@ Win_CreateGLContext()
         return 0;
     }
 
-    /*
     int OpenGLVersion[2];
     glGetIntegerv( GL_MAJOR_VERSION, &OpenGLVersion[0]);
     glGetIntegerv( GL_MINOR_VERSION, &OpenGLVersion[1]);
-    */
 
     // OpenGL Extensions
 
@@ -170,7 +167,7 @@ Win_WindowProc(  HWND Window,
         } break;
         case WM_CLOSE: {
             
-            OutputDebugStringA("\nWM_CLOSE\n");
+            OutputDebugStringA("WM_CLOSE\n");
             globalPlaying = false;
             wglMakeCurrent( NULL, NULL);
             wglDeleteContext( RenderingContext);
@@ -178,16 +175,9 @@ Win_WindowProc(  HWND Window,
         } break;
         case WM_DESTROY: {
 
-            OutputDebugStringA("\nWM_DESTROY\n");
+            OutputDebugStringA("WM_DESTROY\n");
             globalPlaying = false;
         } break;
-        case WM_SYSKEYDOWN: 
-        case WM_SYSKEYUP:
-        case WM_KEYDOWN:
-        case WM_KEYUP: {
-            assert (!"Got WM_Key message outside the mainloop\n");
-        } break;
-
     default:
         result =  DefWindowProc(Window, Message, wParam, lParam);
     }
@@ -297,6 +287,20 @@ CALLBACK WinMain(   HINSTANCE Instance,
                     int ShowCommand )
 {
 
+#if ENABLE_CONSOLE
+#include <io.h>
+#include <fcntl.h>
+    if(!AllocConsole()) {
+        assert(!"AllocConsole() failed");
+    }
+
+    int winStdOutFileDesc = _open_osfhandle((intptr_t)GetStdHandle( STD_OUTPUT_HANDLE), _O_TEXT);
+    FILE *fpout = _fdopen( winStdOutFileDesc, "w");
+    *stdout = *fpout;
+    setvbuf( stdout, NULL, _IONBF, 0);
+
+#endif
+
     // Timing
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency( &PerfCountFrequencyResult);
@@ -304,8 +308,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
     bool32 sleepIsGranular = (timeBeginPeriod( 1) == TIMERR_NOERROR);
     
-#define MonitorRefreshRate 60
-#define GameUpdateHz (MonitorRefreshRate)
+#define GameUpdateHz 60
     float targetSecondsPerFrame = 1.0f / (float)GameUpdateHz; 
 
     // WindowClass
@@ -409,17 +412,18 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    /*// play awesome song
+#if 0
+    // play awesome song
     if( FAILED( AudioSourceVoice->Start(0))) {
         OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
         return 0;
-    }*/
+    }
+#endif
 
 
     // Timing
     LARGE_INTEGER LastCounter = Win_GetWallClock();
     uint64 LastCycleCount = __rdtsc();
-
 
     MemoryStack gameMemory = {};
     gameMemory.stackSize = memoryStackSize;
@@ -444,9 +448,6 @@ CALLBACK WinMain(   HINSTANCE Instance,
         gameUpdate(input);
 
         // Timing
-        
-
-
         LARGE_INTEGER workCounter = Win_GetWallClock();
         float workSecondElapsed = Win_GetSecondsElapsed( LastCounter, workCounter);
         float secondsElapsedForFrame = workSecondElapsed;
@@ -464,11 +465,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
             }
 
             float testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
-            if( testSecondsElapsedForFrame < targetSecondsPerFrame) {
-                //OutputDebugStringA( "Missed sleep\n");
-            }
         } else {
-            // Logging
             OutputDebugStringA( "MISSED FRAME\n"); 
         }
 
@@ -479,27 +476,28 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         SwapBuffers( DeviceContext);
 
-
         uint64 endCycleCount = __rdtsc();
         uint64 cyclesElapsed = endCycleCount - LastCycleCount;
         LastCycleCount = endCycleCount;
 
         int64 counterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
 
+        ++frame;
 
+#if BUILD_INTERNAL
         double FPS = (double)perfCountFrequency / (double)counterElapsed;
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
-        //char timeStrBuffer[256];
-        ////_snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %0.2ff/s, %.02fmc/f\n", MSPerFrame, FPS, MCPF);
-        //_snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", MSPerFrame, MCPF);
+        char timeStrBuffer[256];
+        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", MSPerFrame, MCPF);
         //OutputDebugStringA( timeStrBuffer);
 
-        ++frame;
+
+        printf( "%s", timeStrBuffer);
+        printf( "frame: %llu\n", frame);
+#endif
         
     }
-
-    // Cleanup
 
     return 0;
 }
@@ -569,4 +567,3 @@ HRESULT ReadChunkData(HANDLE hFile, void * buffer, DWORD buffersize, DWORD buffe
         hr = HRESULT_FROM_WIN32( GetLastError() );
     return hr;
 }
-

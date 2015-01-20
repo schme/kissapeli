@@ -20,11 +20,11 @@ void main() {
         clipPos == vec2( -1.0, -1.0)) {
         
         
-        gl_Position = vec4( clipPos, 1.0, 1.0);
+        gl_Position = vec4( clipPos, .9, 1.0);
 
     } else {
 
-        gl_Position = vec4( clipPos, 1.0, 1.0);
+        gl_Position = vec4( clipPos, .8, 1.0);
     }
 
 }

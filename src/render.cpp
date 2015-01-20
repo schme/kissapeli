@@ -21,7 +21,7 @@ void initVertexBuffer() {
     glGenBuffers(1, &vbo);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
-    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_DYNAMIC_DRAW); 
+    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STREAM_DRAW); 
     glBindBuffer( GL_ARRAY_BUFFER, 0);
 
 }
@@ -48,13 +48,16 @@ int initRender( void* vertBuf, int width, int height ) {
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUseProgram(0);
 
-    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor( 0.0f, 0.1f, 0.0f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    glEnable( GL_BLEND);
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable( GL_BLEND);
+    //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //glEnable( GL_DEPTH_TEST);
+    //glDepthFunc( GL_LESS);
 
     glEnable( GL_CULL_FACE);
     glCullFace(GL_BACK);

@@ -8,8 +8,8 @@
 #include "render.h"
 #include "memorystack.h"
 
-const float padPadding = 128;
-const float padInitWidth = 12;
+    const float padPadding = 128;
+    const float padInitWidth = 12;
 const float padInitHeight = 32; 
 const float ballXSpeed = 5;
 const float ballYSpeed = 3;

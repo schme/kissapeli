@@ -4,8 +4,6 @@
 static Game *game = NULL;
 static MemoryStack *memory = NULL;
 
-static Color clearColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
-
 
 void getRect( Rect *in, Pad *p) {
     (*in)[0] = p->position + p->velocity;
@@ -31,46 +29,46 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
 }
 
 
-void worldCollision( Pad *p, Rect *A) {
+void worldCollision( Pad *p, Rect *World) {
 
     glm::vec2 wDim= game->board.dimensions;
 
-    if ((*A)[0].x < 0) {
+    if ((*World)[0].x < 0) {
         p->position.x = 0;
         p->velocity.x = 0;
     }
-    if ((*A)[1].x > wDim.x) {
+    if ((*World)[1].x > wDim.x) {
         p->position.x = wDim.x - p->dimensions.x;
         p->velocity.x = 0;
     }
-    if ((*A)[0].y < 0) {
+    if ((*World)[0].y < 0) {
         p->position.y = 0;
         p->velocity.y = 0;
     }
-    if ((*A)[1].y > wDim.y) {
+    if ((*World)[1].y > wDim.y) {
         p->position.y = wDim.y - p->dimensions.y;
         p->velocity.y = 0;
     }
 }
 
 
-void worldCollision( Ball *b, Rect *A) {
+void worldCollision( Ball *b, Rect *World) {
 
     glm::vec2 wDim= game->board.dimensions;
 
-    if ((*A)[0].x < 0) {
+    if ((*World)[0].x < 0) {
         b->position.x = b->radius / 2.f;
         b->velocity.x = -(b->velocity.x);
     }
-    if ((*A)[1].x > wDim.x) {
+    if ((*World)[1].x > wDim.x) {
         b->position.x = wDim.x - b->radius / 2.f;
         b->velocity.x = -(b->velocity.x);
     }
-    if ((*A)[0].y < 0) {
+    if ((*World)[0].y < 0) {
         b->position.y = b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
     }
-    if ((*A)[1].y > wDim.y) {
+    if ((*World)[1].y > wDim.y) {
         b->position.y = wDim.y - b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
     }

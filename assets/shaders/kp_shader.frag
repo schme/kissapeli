@@ -11,6 +11,7 @@ vec4 player2Color = vec4(0.7, 0.3, 0.7, 1.0);
 vec4 middleBarColor = vec4(1.0, 1.0, 1.0, 0.5);
 
 
+float FPS = 60.0;
 vec3 COLOR1 = vec3(0.0, 0.0, 0.1);
 vec3 COLOR2 = vec3(0.4, 0.3, 0.0);
 float BLOCK_WIDTH = 0.01;
@@ -22,7 +23,7 @@ void main()
     float middleBarHalfWidth = 4.0;
     vec2 middleBarHalfPos = vec2( screenSize.x / 2.f - middleBarHalfWidth,
                                   screenSize.x / 2.f + middleBarHalfWidth);
-    float dirtyTime = frame / 60.0;
+    float dirtyTime = frame / FPS;
 
     /**
      * Different objects are passed in with different colors (objColor)
