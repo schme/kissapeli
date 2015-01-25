@@ -1,8 +1,8 @@
 
 #include "win_kissapeli.h"
+#include "win_audio.h"
 
 #include <wingdi.h>
-#include <xaudio2.h>
 
 #if ENABLE_CONSOLE
 #include <io.h>
@@ -17,12 +17,10 @@ static bool32 globalPlaying;
 static int64 perfCountFrequency;
 static uint64 frame;
 
-
-// TODO(Kasper): global for now
+static AudioEngine audioEngine;
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
 HRESULT ReadChunkData(HANDLE hFile, void * buffer, DWORD buffersize, DWORD bufferoffset);
-
 
 void
 Win_FreeMemory( void *Memory) {
@@ -324,22 +322,15 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
 
     /* XAudio2 */
-
     const char *audioTestFile = "assets/audio/song.wav";
-    IXAudio2 *XAudioInstance = NULL;
-    IXAudio2MasteringVoice *AudioMasterVoice = NULL;
 
+    /* Has to be called before initing AudioEngine */
     CoInitializeEx( NULL, COINIT_MULTITHREADED);
 
-    if( FAILED( XAudio2Create( &XAudioInstance, 0 ))) {
-        OutputDebugStringA( "FAILED: Creating XAudio2 instance\n");
+    if(!audioEngine.Init()) {
+        OutputDebugStringA( "FAILED: AudioEngine.Init()\n");
         return 0;
     }
-    if( FAILED( XAudioInstance->CreateMasteringVoice( &AudioMasterVoice))) {
-        OutputDebugStringA( "FAILED: CreateMasteringVoice\n");
-        return 0;
-    }
-
 
     if( !RegisterClassA( &WindowClass)) {
         OutputDebugStringA( "FAILED: RegisterWindowClass\n");
@@ -414,7 +405,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
     IXAudio2SourceVoice *AudioSourceVoice = NULL;
 
-    if( FAILED( XAudioInstance->CreateSourceVoice( &AudioSourceVoice, (WAVEFORMATEX*)&wfx))) {
+    if( FAILED( audioEngine.getInstance()->CreateSourceVoice( &AudioSourceVoice, (WAVEFORMATEX*)&wfx))) {
         OutputDebugStringA( "FAILED: CreateSourceVoice\n");
         return 0;
     }
@@ -423,12 +414,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    if( FAILED( AudioSourceVoice->Start(0))) {
-        OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
-        return 0;
-    }
 
-#if 0
+#if 1
     // play awesome song
     if( FAILED( AudioSourceVoice->Start(0))) {
         OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");

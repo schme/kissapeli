@@ -9,7 +9,7 @@
 #include "kms_glutils.h"
 
 #define ASSETPATH  "assets/"
-#define SHADERPATH( s_name)  ASSETPATH "shaders/" s_name
+#define SHADERPATH(shader)  "shaders/" shader
 
 const static int vertexBufferSize = 1024;
 static void *vertexBuffer = NULL;
