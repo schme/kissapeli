@@ -4,8 +4,12 @@
 #include <wingdi.h>
 #include <xaudio2.h>
 
-const uint64 memoryStackSize = 4*1024;
+#if ENABLE_CONSOLE
+#include <io.h>
+#include <fcntl.h>
+#endif
 
+const uint64 memoryStackSize = 4*1024;
 
 static HDC DeviceContext;
 static HGLRC RenderingContext;
@@ -13,6 +17,8 @@ static bool32 globalPlaying;
 static int64 perfCountFrequency;
 static uint64 frame;
 
+
+// TODO(Kasper): global for now
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
 HRESULT ReadChunkData(HANDLE hFile, void * buffer, DWORD buffersize, DWORD bufferoffset);
@@ -125,14 +131,13 @@ Win_GetWallClock() {
 }
 
 
-inline float
+inline real32
 Win_GetSecondsElapsed( LARGE_INTEGER Start, LARGE_INTEGER End)
 {
     float Result = ((float)(End.QuadPart - Start.QuadPart) /
                     (float)perfCountFrequency);
     return Result;
 }
-
 
 
 LRESULT CALLBACK 
@@ -288,8 +293,6 @@ CALLBACK WinMain(   HINSTANCE Instance,
 {
 
 #if ENABLE_CONSOLE
-#include <io.h>
-#include <fcntl.h>
     if(!AllocConsole()) {
         assert(!"AllocConsole() failed");
     }
@@ -319,76 +322,24 @@ CALLBACK WinMain(   HINSTANCE Instance,
     //WindowClass.hIcon;
     WindowClass.lpszClassName = "KissapeliWindowClass";
 
+
     /* XAudio2 */
-    WAVEFORMATEXTENSIBLE wfx = {};
-    XAUDIO2_BUFFER buffer = {};
+
+    const char *audioTestFile = "assets/audio/song.wav";
+    IXAudio2 *XAudioInstance = NULL;
+    IXAudio2MasteringVoice *AudioMasterVoice = NULL;
 
     CoInitializeEx( NULL, COINIT_MULTITHREADED);
 
-    IXAudio2 *XAudioInstance = NULL;
     if( FAILED( XAudio2Create( &XAudioInstance, 0 ))) {
         OutputDebugStringA( "FAILED: Creating XAudio2 instance\n");
         return 0;
     }
-    IXAudio2MasteringVoice *AudioMasterVoice = NULL;
     if( FAILED( XAudioInstance->CreateMasteringVoice( &AudioMasterVoice))) {
         OutputDebugStringA( "FAILED: CreateMasteringVoice\n");
         return 0;
     }
 
-    /* Open the audio file */
-    HANDLE hFile = CreateFile(
-        "assets\\audio\\song.wav",
-        GENERIC_READ,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        0,
-        NULL );
-
-    if( INVALID_HANDLE_VALUE == hFile ) {
-        return HRESULT_FROM_WIN32( GetLastError());
-    }
-    if( INVALID_SET_FILE_POINTER == SetFilePointer( hFile, 0, NULL, FILE_BEGIN ) ) {
-        return HRESULT_FROM_WIN32( GetLastError());
-    }
-    DWORD dwChunkSize;
-    DWORD dwChunkPosition;
-
-    //check the file type, should be fourccWAVE or 'XWMA'
-    FindChunk( hFile,fourccRIFF,dwChunkSize, dwChunkPosition );
-    DWORD filetype;
-    ReadChunkData( hFile,&filetype,sizeof(DWORD),dwChunkPosition);
-    if (filetype != fourccWAVE) {
-        OutputDebugStringA( "FAILED: Audio file not recognized as WAVE\n");
-        return S_FALSE;
-    }
-
-    FindChunk( hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-    ReadChunkData( hFile, &wfx, dwChunkSize, dwChunkPosition);
-
-    //fill out the audio data buffer with the contents of the fourccDATA chunk
-    FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition );
-    BYTE *pDataBuffer = new BYTE[dwChunkSize];
-    ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-    buffer.AudioBytes = dwChunkSize;        //size of the audio buffer in bytes
-    buffer.pAudioData = pDataBuffer;        //buffer containing audio data
-    buffer.LoopBegin = 0;
-    buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
-    buffer.Flags = XAUDIO2_END_OF_STREAM;   // tell the source voice not to expect any data after this buffer
-
-
-    
-    IXAudio2SourceVoice *AudioSourceVoice = NULL;
-    if( FAILED( XAudioInstance->CreateSourceVoice( &AudioSourceVoice, (WAVEFORMATEX*)&wfx))) {
-        OutputDebugStringA( "FAILED: CreateSourceVoice\n");
-        return 0;
-    }
-    if( FAILED( AudioSourceVoice->SubmitSourceBuffer( &buffer))) {
-        OutputDebugStringA( "FAILED: SubmitSourceBuffer\n");
-        return 0;
-    }
 
     if( !RegisterClassA( &WindowClass)) {
         OutputDebugStringA( "FAILED: RegisterWindowClass\n");
@@ -412,6 +363,71 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
+
+    WAVEFORMATEXTENSIBLE wfx = {};
+    XAUDIO2_BUFFER buffer = {};
+
+    /* Open the audio file */
+    HANDLE file = CreateFile(
+        audioTestFile,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL );
+
+    if( INVALID_HANDLE_VALUE == file ) {
+        //return buffer;
+    }
+
+    if( INVALID_SET_FILE_POINTER == SetFilePointer( file, 0, NULL, FILE_BEGIN ) ) {
+        //return buffer;
+    }
+
+    DWORD dwChunkSize;
+    DWORD dwChunkPosition;
+
+    //check the file type, should be fourccWAVE or 'XWMA'
+    FindChunk( file, fourccRIFF, dwChunkSize, dwChunkPosition );
+    DWORD filetype;
+    ReadChunkData( file, &filetype, sizeof(DWORD), dwChunkPosition);
+    if (filetype != fourccWAVE) {
+        OutputDebugStringA( "FAILED: Audio file not recognized as WAVE\n");
+        //return buffer;
+    }
+
+    FindChunk( file, fourccFMT, dwChunkSize, dwChunkPosition);
+    ReadChunkData( file, &wfx, dwChunkSize, dwChunkPosition);
+
+    //fill out the audio data buffer with the contents of the fourccDATA chunk
+    FindChunk(file, fourccDATA, dwChunkSize, dwChunkPosition );
+    BYTE *pDataBuffer = new BYTE[dwChunkSize];
+    ReadChunkData(file, pDataBuffer, dwChunkSize, dwChunkPosition);
+
+    buffer.AudioBytes = dwChunkSize;        //size of the audio buffer in bytes
+    buffer.pAudioData = pDataBuffer;        //buffer containing audio data
+    buffer.LoopBegin = 0;
+    buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+    buffer.Flags = XAUDIO2_END_OF_STREAM;   // tell the source voice not to expect any data after this buffer
+
+
+    IXAudio2SourceVoice *AudioSourceVoice = NULL;
+
+    if( FAILED( XAudioInstance->CreateSourceVoice( &AudioSourceVoice, (WAVEFORMATEX*)&wfx))) {
+        OutputDebugStringA( "FAILED: CreateSourceVoice\n");
+        return 0;
+    }
+    if( FAILED( AudioSourceVoice->SubmitSourceBuffer( &buffer))) {
+        OutputDebugStringA( "FAILED: SubmitSourceBuffer\n");
+        return 0;
+    }
+
+    if( FAILED( AudioSourceVoice->Start(0))) {
+        OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
+        return 0;
+    }
+
 #if 0
     // play awesome song
     if( FAILED( AudioSourceVoice->Start(0))) {
@@ -424,6 +440,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // Timing
     LARGE_INTEGER LastCounter = Win_GetWallClock();
     uint64 LastCycleCount = __rdtsc();
+    real64 msPerFrame = 0;
 
     MemoryStack gameMemory = {};
     gameMemory.stackSize = memoryStackSize;
@@ -444,6 +461,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
         GameInput input = {};
         Win_HandleMessages(&input);
         input.frame = frame;
+        input.deltaTime = msPerFrame;
 
         gameUpdate(input);
 
@@ -471,7 +489,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         
         LARGE_INTEGER EndCounter = Win_GetWallClock();
-        double MSPerFrame = 1000.0f*Win_GetSecondsElapsed( LastCounter, EndCounter);
+        msPerFrame = 1000.0f*Win_GetSecondsElapsed( LastCounter, EndCounter);
         LastCounter = EndCounter;
 
         SwapBuffers( DeviceContext);
@@ -484,15 +502,14 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         ++frame;
 
-#if BUILD_INTERNAL
+#if BUILD_INTERNAL && LOGLEVEL > 1
         double FPS = (double)perfCountFrequency / (double)counterElapsed;
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
         char timeStrBuffer[256];
-        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", MSPerFrame, MCPF);
-        //OutputDebugStringA( timeStrBuffer);
+        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", msPerFrame, MCPF);
 
-
+        OutputDebugStringA( timeStrBuffer);
         printf( "%s", timeStrBuffer);
         printf( "frame: %llu\n", frame);
 #endif

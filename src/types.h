@@ -13,7 +13,11 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
+typedef float real32;
+typedef float real64;
+
 typedef uint32_t bool32;
+
 
 
 #endif // TYPES_H_

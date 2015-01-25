@@ -15,8 +15,8 @@
 #include "types.h"
 
 
-const static int windowWidth = boardWidth;
-const static int windowHeight = boardHeight;
+const static int32 windowWidth = (int32)boardWidth;
+const static int32 windowHeight = (int32)boardHeight;
 
 
 // Little-Endian
@@ -30,8 +30,8 @@ const static int windowHeight = boardHeight;
 
 struct Win_WindowDimensions 
 {
-    int width;
-    int height;
+    int32 width;
+    int32 height;
 };
 
 

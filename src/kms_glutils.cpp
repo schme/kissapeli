@@ -1,7 +1,5 @@
 #include "kms_glutils.h"
 
-namespace kms {
-
 
 std::string fileToString( const char *filename) {
     std::ifstream file( filename);
@@ -30,7 +28,17 @@ GLint loadShader( const char *filename, GLenum shaderType) {
     GLint status;
     glGetShaderiv( shaderObject, GL_COMPILE_STATUS, &status);
     if( status == GL_FALSE) {
-        assert(0 && "Shader didn't compile!");
+
+#if ENABLE_CONSOLE
+        PRINT_SHADER_ERROR( shaderObject);
+#endif
+        assert(!"Shader didn't compile!");
+        //glDeleteShader( shaderObject);
+        //
+    } else {
+#if ENABLE_CONSOLE
+        printf("Shader compilation succeeded\n");
+#endif
     }
 
     return shaderObject;
@@ -67,7 +75,3 @@ GLint createProgram( std::vector<GLint> &shaders) {
     }
     return shaderProgram;
 }
-
-
-
-} // namespace kms

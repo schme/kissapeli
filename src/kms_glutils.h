@@ -11,13 +11,15 @@
 
 #include "kms.h"
 
-namespace kms {
+#define PRINT_SHADER_ERROR( shader ) \
+        GLint logSize = 0;\
+        glGetShaderiv( shader, GL_INFO_LOG_LENGTH, &logSize);\
+        GLchar *errorMessage = (GLchar*)malloc( (uint32)logSize );\
+        glGetShaderInfoLog( shader, logSize, NULL, errorMessage);\
+        printf("%s\n", errorMessage)
 
 std::string fileToString( const char *filename);
 GLint loadShader( const char *filename, GLenum shaderType);
 GLint createProgram( std::vector<GLint> &shaders);
-
-
-} // namespace kms
 
 #endif // KMS_GLUTILS_H_

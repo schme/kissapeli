@@ -5,26 +5,22 @@ layout(location = 1) in vec4 color;
 flat out vec4 objColor;
 
 uniform vec2 screenSize;
+uniform vec2 boardSize;
 uniform int frame;
+
 
 void main() {
     objColor = color;
 
-    vec2 clipPos = position;
-    clipPos -= screenSize/2.0;
-    clipPos = clipPos / (screenSize/2.0);
+    vec2 shiftPos = position / boardSize * screenSize;
+    shiftPos -= screenSize/2.0;
 
-    if( clipPos == vec2( 1.0, 1.0) ||
-        clipPos == vec2( 1.0, -1.0) ||
-        clipPos == vec2( -1.0, 1.0) ||
-        clipPos == vec2( -1.0, -1.0)) {
-        
-        
-        gl_Position = vec4( clipPos, .9, 1.0);
+    mat4 m = mat4(
+        2.0 / screenSize.x, 0.0, 0.0, 0.0,
+        0.0, 2.0 / screenSize.y, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0);
 
-    } else {
-
-        gl_Position = vec4( clipPos, .8, 1.0);
-    }
+    gl_Position = vec4( shiftPos, 0.0, 1.0) * m;
 
 }

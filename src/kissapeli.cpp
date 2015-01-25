@@ -3,7 +3,10 @@
 
 static Game *game = NULL;
 static MemoryStack *memory = NULL;
+static GameStatus gameStatus = Playing;
 
+static uint32 p1lives = 9;
+static uint32 p2lives = 9;
 
 void getRect( Rect *in, Pad *p) {
     (*in)[0] = p->position + p->velocity;
@@ -15,7 +18,7 @@ void getRect( Rect *in, Ball *b) {
     (*in)[1] = b->position + b->radius/2 + b->velocity;
 }
 
-void getRect( Rect *in, World *w) {
+void getRect( Rect *in, Board *w) {
     (*in)[0] = glm::vec2( 0.f, 0.f);
     (*in)[1] = w->dimensions;
 }
@@ -29,46 +32,48 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
 }
 
 
-void worldCollision( Pad *p, Rect *World) {
+void worldCollision( Pad *p, Rect *Board) {
 
-    glm::vec2 wDim= game->board.dimensions;
+    glm::vec2 wDim = game->board.dimensions;
 
-    if ((*World)[0].x < 0) {
+    if ((*Board)[0].x < 0) {
         p->position.x = 0;
         p->velocity.x = 0;
     }
-    if ((*World)[1].x > wDim.x) {
+    if ((*Board)[1].x > wDim.x) {
         p->position.x = wDim.x - p->dimensions.x;
         p->velocity.x = 0;
     }
-    if ((*World)[0].y < 0) {
+    if ((*Board)[0].y < 0) {
         p->position.y = 0;
         p->velocity.y = 0;
     }
-    if ((*World)[1].y > wDim.y) {
+    if ((*Board)[1].y > wDim.y) {
         p->position.y = wDim.y - p->dimensions.y;
         p->velocity.y = 0;
     }
 }
 
 
-void worldCollision( Ball *b, Rect *World) {
+void worldCollision( Ball *b, Rect *Board) {
 
     glm::vec2 wDim= game->board.dimensions;
 
-    if ((*World)[0].x < 0) {
-        b->position.x = b->radius / 2.f;
-        b->velocity.x = -(b->velocity.x);
+    if ((*Board)[0].x < 0) {
+        --p1lives;
+        gameStatus = Resetting;
+        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
     }
-    if ((*World)[1].x > wDim.x) {
-        b->position.x = wDim.x - b->radius / 2.f;
-        b->velocity.x = -(b->velocity.x);
+    if ((*Board)[1].x > wDim.x) {
+        --p2lives;
+        gameStatus = Resetting;
+        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
     }
-    if ((*World)[0].y < 0) {
+    if ((*Board)[0].y < 0) {
         b->position.y = b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
     }
-    if ((*World)[1].y > wDim.y) {
+    if ((*Board)[1].y > wDim.y) {
         b->position.y = wDim.y - b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
     }
@@ -79,8 +84,10 @@ void applyVelocities() {
 
     game->player1.position += game->player1.velocity;
     game->player2.position += game->player2.velocity;
-    game->ball.position += game->ball.velocity;
 
+    if( gameStatus == Playing) {
+        game->ball.position += game->ball.velocity;
+    }
 }
 
     
@@ -96,11 +103,6 @@ void ballRectCollision( Rect *rectBall, Rect *rectPad) {
 
         int velSign = ball->velocity.y < 0 ? -1 : 1;
         ball->velocity.y = velSign * (ballYSpeed + english);
-
-        //WIN_OUTPUTDEBUG_F( "\nenglish ", english);
-        //WIN_OUTPUTDEBUG_F( "padMiddlePos ", padMiddlePos);
-        //WIN_OUTPUTDEBUG_F( "ball->position.y ", ball->position.y);
-        //WIN_OUTPUTDEBUG_F( "ball->velocity.y ", ball->velocity.y);
 
         if (ball->position.y >= (*rectPad)[1].y || 
             ball->position.y <= (*rectPad)[0].y ) {
@@ -135,35 +137,42 @@ void collisions() {
     worldCollision( player2, &rectPlayer2);
     worldCollision( ball, &rectBall);
 
-    /** collisionHandling for my balls */
+    /** collisionHandling for my ballz */
     ballRectCollision( &rectBall, &rectPlayer1);
     ballRectCollision( &rectBall, &rectPlayer2);
-
 }
 
 
 void runSimulation() {
+    
     collisions();
     applyVelocities();
 }
 
 /**
  * Order: background, player1 , player2 
+ * TODO: Tidy this mofo uuuup! Clean your room! Do the dishes!
  */
 void gameVertices() {
 
     char* index = (char*)vertexBuffer;
     
-    float vb[] = { 0.f, 0.f,
+    /**
+     * TODO: Fix this workaround. Shouldn't be needed
+     * Used currently for setting the background "object" color
+     * to let the fragment shader recognize background from the rest
+     */
+    float boardVertices[] = { 0.f, 0.f,
                    game->board.dimensions.x, 0.f,
                    game->board.dimensions.x, game->board.dimensions.y,
                    0.f, game->board.dimensions.y };
-    memcpy( index, vb, sizeof( vb));
-    index += sizeof( vb);
+    memcpy( index, boardVertices, sizeof( boardVertices));
+    index += sizeof( boardVertices);
+
 
     PlayerArray *qa = (PlayerArray*)index;
-
     Pad *p = &game->player1;
+
     (*qa)[0] = p->position.x;
     (*qa)[1] = p->position.y;
 
@@ -192,37 +201,36 @@ void gameVertices() {
     index += sizeof( PlayerArray);
 
     Ball *b = &game->ball;
-    float vball[] = { b->position.x - b->radius/2, b->position.y - b->radius/2,
+    float ballVertices[] = { b->position.x - b->radius/2, b->position.y - b->radius/2,
                       b->position.x + b->radius/2, b->position.y - b->radius/2,
                       b->position.x + b->radius/2, b->position.y + b->radius/2,
                       b->position.x - b->radius/2, b->position.y + b->radius/2 };
 
-    memcpy( index, vball, sizeof(vball));
+    memcpy( index, ballVertices, sizeof(ballVertices));
 
-    index += sizeof( vball);
+    index += sizeof( ballVertices);
 
-
-    //TODO: This is ugly pls do something
+    //TODO: is ugly pls do something
     float colors[] = { 
-        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
-        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
-        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
-        bgShaderColor.r, bgShaderColor.g, bgShaderColor.b, bgShaderColor.a,
+        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
+        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
+        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
+        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
 
-        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
-        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
-        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
-        p1ShaderColor.r, p1ShaderColor.g, p1ShaderColor.b, p1ShaderColor.a,
+        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
+        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
+        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
+        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
 
-        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
-        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
-        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
-        p2ShaderColor.r, p2ShaderColor.g, p2ShaderColor.b, p2ShaderColor.a,
+        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
+        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
+        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
+        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
 
-        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
-        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
-        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
-        bShaderColor.r, bShaderColor.g, bShaderColor.b, bShaderColor.a,
+        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
+        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
+        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
+        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
     };
 
     memcpy( index, colors, sizeof(colors));
@@ -230,52 +238,72 @@ void gameVertices() {
 }
 
 
+void allocateGameMemory() {
+
+    game = (Game*)popMemoryStack( memory, sizeof( Game));
+    vertexBuffer = popMemoryStack( memory, vertexBufferSize);
+}
+
+/**
+ * TODO(Kasper): Why is the board wrong width before resize?
+ */
+Ball getNewBall() {
+    int32 random = rand();
+
+    Ball ball = { glm::vec2( game->board.dimensions.x/2.f, 
+                             game->board.dimensions.y/2.f),
+                  glm::vec2( (random < RAND_MAX/2) ? -ballXSpeed : ballXSpeed,
+                             (random % 10 < 5) ? -ballYSpeed : ballYSpeed),
+                  ballRadius
+    };
+
+
+    return ball;
+}
+
 
 void initGame() {
 
-    srand((unsigned)time(NULL));
-    int random = rand() / RAND_MAX;
+    srand((uint32)time(NULL));
+    Board board = { glm::vec2( boardWidth, boardHeight ) };
 
-    World board = { glm::vec2( boardWidth, boardHeight ) };
-
-    Ball ball = { glm::vec2( boardWidth/2.f, boardHeight/2.f),
-                  glm::vec2( (random < RAND_MAX/2) ? -ballXSpeed : ballXSpeed,
-                             (random < RAND_MAX/2) ? -ballYSpeed : ballYSpeed),
-                  ballRadius
-    };
-    Pad player1 = { glm::vec2( padPadding, (float)boardHeight/2.f - padInitHeight/2.f),
+    Pad player1 = { glm::vec2( padPadding, (real32)boardHeight/2.f - padInitHeight/2.f),
                     glm::vec2(padInitWidth, padInitHeight) 
     };
     Pad player2 = { glm::vec2(  boardWidth - padPadding - padInitWidth, 
-                                (float)boardHeight/2.f - padInitHeight/2.f),
+                                boardHeight/2.f - padInitHeight/2.f),
                     glm::vec2(padInitWidth, padInitHeight) 
     };
 
     game->player1 = player1;
     game->player2 = player2;
-    game->ball = ball;
     game->board = board;
+    game->ball = getNewBall();
 }
+
 
 void gameRender(uint64 frame) {
+
+    GameState state = {
+        gameStatus, p1lives, p2lives
+    };
     gameVertices();
-    draw( frame);
+    draw( frame, state);
 }
 
-void gameRender() {
-}
+
+void gameRender() { }
+
 
 void gameInit( MemoryStack* ms) {
     memory = ms;
 
-    // TODO: Move this to MemoryAllocator for this?
-    game = (Game*)popMemoryStack( memory, sizeof( Game));
-    vertexBuffer = popMemoryStack( memory, vertexBufferSize);
+    allocateGameMemory();
     initGame();
     initRender( vertexBuffer, boardWidth, boardHeight);
 };
 
-void changeInputStates( GameInput *state, GameInput input) {
+void changeInputState( GameInput *state, GameInput input) {
 
     if( input.KEY_W ) {
         (*state).KEY_W = !(*state).KEY_W;
@@ -309,66 +337,63 @@ void HandleInput( GameInput input) {
 
     static GameInput state;
 
-    /** Change state */
-    changeInputStates( &state, input);
+    changeInputState( &state, input);
 
     /** Player1 **/
     if( state.KEY_W) {
         game->player1.velocity.y = padVelocityMod;
+
     } else if( state.KEY_S) {
         game->player1.velocity.y = -padVelocityMod;
+
     } else {
         game->player1.velocity.y = 0;
     }
 
-
-    //if( state.KEY_A) {
-        //game->player1.velocity.x = -padVelocityMod;
-    //} else if( state.KEY_D) {
-        //game->player1.velocity.x = padVelocityMod;
-    //} else {
-        //game->player1.velocity.x = 0.f;
-    //}
-
-
     /** Player2 **/
     if( state.KEY_UP) {
         game->player2.velocity.y = padVelocityMod;
+
     } else if( state.KEY_DOWN) {
         game->player2.velocity.y = -padVelocityMod;
+
     } else {
         game->player2.velocity.y = 0.f;
     }
-
-    //if( state.KEY_LEFT) {
-        //game->player2.velocity.x = -padVelocityMod;
-    //} else if( state.KEY_RIGHT) {
-        //game->player2.velocity.x = padVelocityMod;
-    //} else {
-        //game->player2.velocity.x = 0.f;
-    //}
 
 };
  
 
 void gameUpdate(GameInput input) {
 
+    static real64 timer;
+    GameStatus lastStatus = gameStatus;
 
-    // game stuff
     HandleInput(input);
     runSimulation();
 
-    // render
+    switch (gameStatus) { 
+        case Resetting: {
+
+            if( lastStatus == Playing ) {
+                game->ball = getNewBall();
+                timer = 0.0;
+
+            } else if( timer >= goalResetTime) {
+                gameStatus = Playing;
+
+            } else {
+                timer += input.deltaTime;
+            }
+            
+        } break;
+        default: break;
+    }
+
     gameRender( input.frame);
 }
 
 
 void resizeCallback( int w, int h) {
-    if( game) {
-        game->board.dimensions.x = (float)w;
-        game->board.dimensions.y = (float)h;
-    }
     resize(w, h);
 }
-
-

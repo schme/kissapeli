@@ -10,10 +10,14 @@ static GLuint vao = 0;
 
 static float screenWidth = 0;
 static float screenHeight = 0;
+static float boardWidth = 0;
+static float boardHeight = 0;
+
 // 2 floats * 4 corners * ( board, 2 pads, ball )
 static uint32 vertexDataSize = 32 * sizeof(float);
 
 GLuint screenSizeUnif;
+GLuint boardSizeUnif;
 GLuint frameUnif;
 
 void initVertexBuffer() {
@@ -26,17 +30,17 @@ void initVertexBuffer() {
 
 }
 
-int initRender( void* vertBuf, int width, int height ) {
+int initRender( void* vertBuf, real32 width, real32 height ) {
 
     vertexBuffer = vertBuf;    
-    screenWidth = (float)width;
-    screenHeight = (float)height;
+    boardWidth = width;
+    boardHeight = height;
 
     std::vector<GLint> shaders;
-    shaders.push_back(kms::loadShader( SHADERPATH("kp_shader.vert"), GL_VERTEX_SHADER));
-    shaders.push_back(kms::loadShader( SHADERPATH("kp_shader.frag"), GL_FRAGMENT_SHADER));
+    shaders.push_back(loadShader( SHADERPATH("kp_shader.vert"), GL_VERTEX_SHADER));
+    shaders.push_back(loadShader( SHADERPATH("kp_shader.frag"), GL_FRAGMENT_SHADER));
 
-    shaderProgram = kms::createProgram( shaders);
+    shaderProgram = createProgram( shaders);
     if( !shaderProgram) {
         assert(0 && "No Shader Program!\n");
         return 0;
@@ -44,11 +48,13 @@ int initRender( void* vertBuf, int width, int height ) {
 
     glUseProgram( shaderProgram);
     screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize"); 
+    boardSizeUnif = glGetUniformLocation( shaderProgram, "boardSize");
     frameUnif = glGetUniformLocation( shaderProgram, "frame"); 
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
+    glUniform2f( boardSizeUnif, boardWidth, boardHeight);
     glUseProgram(0);
 
-    glClearColor( 0.0f, 0.1f, 0.0f, 1.0f);
+    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -57,7 +63,9 @@ int initRender( void* vertBuf, int width, int height ) {
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glEnable( GL_DEPTH_TEST);
-    //glDepthFunc( GL_LESS);
+    //glDepthMask( GL_TRUE);
+    //glDepthFunc( GL_LEQUAL);
+    //glDepthRange( 1.0f, 0.0f);
 
     glEnable( GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -67,14 +75,12 @@ int initRender( void* vertBuf, int width, int height ) {
 }
 
 
-void draw(uint64 frame) {
+void draw(uint64 frame, GameState state) {
 
-
-    glClear( GL_COLOR_BUFFER_BIT);
+    glClear( GL_COLOR_BUFFER_BIT );
     glUseProgram( shaderProgram);
 
-    glUniform1i( frameUnif, (GLint)frame);
-    glUniform2f( screenSizeUnif, screenWidth, screenHeight);
+    glUniform1i( frameUnif, (uint32)frame);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
     glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);
@@ -97,5 +103,7 @@ void resize( int w, int h) {
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
     screenWidth = (float)w;
     screenHeight = (float)h;
+    glUseProgram( shaderProgram);
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
+    glUseProgram(0);
 };

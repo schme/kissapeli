@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define ASSETPATH  "assets/"
-#define SHADERPATH( s_name)  ASSETPATH "shaders/" s_name
+#include "types.h"
 
 #define DEBUG_STRING_SIZE 256
 
