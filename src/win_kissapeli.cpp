@@ -19,9 +19,6 @@ static uint64 frame;
 
 static AudioEngine audioEngine;
 
-HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
-HRESULT ReadChunkData(HANDLE hFile, void * buffer, DWORD buffersize, DWORD bufferoffset);
-
 void
 Win_FreeMemory( void *Memory) {
     if( Memory) {
@@ -321,13 +318,12 @@ CALLBACK WinMain(   HINSTANCE Instance,
     WindowClass.lpszClassName = "KissapeliWindowClass";
 
 
-    /* XAudio2 */
     const char *audioTestFile = "assets/audio/song.wav";
 
-    /* Has to be called before initing AudioEngine */
+    /* Has to be called before AudioEngine init */
     CoInitializeEx( NULL, COINIT_MULTITHREADED);
 
-    if(!audioEngine.Init()) {
+    if(!audioEngine.init()) {
         OutputDebugStringA( "FAILED: AudioEngine.Init()\n");
         return 0;
     }
@@ -354,73 +350,13 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-
-    WAVEFORMATEXTENSIBLE wfx = {};
-    XAUDIO2_BUFFER buffer = {};
-
-    /* Open the audio file */
-    HANDLE file = CreateFile(
-        audioTestFile,
-        GENERIC_READ,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        0,
-        NULL );
-
-    if( INVALID_HANDLE_VALUE == file ) {
-        //return buffer;
-    }
-
-    if( INVALID_SET_FILE_POINTER == SetFilePointer( file, 0, NULL, FILE_BEGIN ) ) {
-        //return buffer;
-    }
-
-    DWORD dwChunkSize;
-    DWORD dwChunkPosition;
-
-    //check the file type, should be fourccWAVE or 'XWMA'
-    FindChunk( file, fourccRIFF, dwChunkSize, dwChunkPosition );
-    DWORD filetype;
-    ReadChunkData( file, &filetype, sizeof(DWORD), dwChunkPosition);
-    if (filetype != fourccWAVE) {
-        OutputDebugStringA( "FAILED: Audio file not recognized as WAVE\n");
-        //return buffer;
-    }
-
-    FindChunk( file, fourccFMT, dwChunkSize, dwChunkPosition);
-    ReadChunkData( file, &wfx, dwChunkSize, dwChunkPosition);
-
-    //fill out the audio data buffer with the contents of the fourccDATA chunk
-    FindChunk(file, fourccDATA, dwChunkSize, dwChunkPosition );
-    BYTE *pDataBuffer = new BYTE[dwChunkSize];
-    ReadChunkData(file, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-    buffer.AudioBytes = dwChunkSize;        //size of the audio buffer in bytes
-    buffer.pAudioData = pDataBuffer;        //buffer containing audio data
-    buffer.LoopBegin = 0;
-    buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
-    buffer.Flags = XAUDIO2_END_OF_STREAM;   // tell the source voice not to expect any data after this buffer
+    audioEngine.loadAudio( "assets/audio/song.wav", 1, 0);
+    audioEngine.loadAudio( "assets/audio/beep.wav", 0, 1);
 
 
-    IXAudio2SourceVoice *AudioSourceVoice = NULL;
-
-    if( FAILED( audioEngine.getInstance()->CreateSourceVoice( &AudioSourceVoice, (WAVEFORMATEX*)&wfx))) {
-        OutputDebugStringA( "FAILED: CreateSourceVoice\n");
-        return 0;
-    }
-    if( FAILED( AudioSourceVoice->SubmitSourceBuffer( &buffer))) {
-        OutputDebugStringA( "FAILED: SubmitSourceBuffer\n");
-        return 0;
-    }
-
-
-#if 1
-    // play awesome song
-    if( FAILED( AudioSourceVoice->Start(0))) {
-        OutputDebugStringA( "FAILED: AudioSourceVoice->Start\n");
-        return 0;
-    }
+#if 0
+    audioEngine.playAudio(0);
+    audioEngine.playAudio(1);
 #endif
 
 
@@ -504,70 +440,4 @@ CALLBACK WinMain(   HINSTANCE Instance,
     }
 
     return 0;
-}
-
-
-
-HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition)
-{
-    HRESULT hr = S_OK;
-    if( INVALID_SET_FILE_POINTER == SetFilePointer( hFile, 0, NULL, FILE_BEGIN ) )
-        return HRESULT_FROM_WIN32( GetLastError() );
-
-    DWORD dwChunkType;
-    DWORD dwChunkDataSize;
-    DWORD dwRIFFDataSize = 0;
-    DWORD dwFileType;
-    DWORD bytesRead = 0;
-    DWORD dwOffset = 0;
-
-    while (hr == S_OK)
-    {
-        DWORD dwRead;
-        if( 0 == ReadFile( hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL ) )
-            hr = HRESULT_FROM_WIN32( GetLastError() );
-
-        if( 0 == ReadFile( hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL ) )
-            hr = HRESULT_FROM_WIN32( GetLastError() );
-
-        switch (dwChunkType)
-        {
-        case fourccRIFF:
-            dwRIFFDataSize = dwChunkDataSize;
-            dwChunkDataSize = 4;
-            if( 0 == ReadFile( hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL ) )
-                hr = HRESULT_FROM_WIN32( GetLastError() );
-            break;
-
-        default:
-            if( INVALID_SET_FILE_POINTER == SetFilePointer( hFile, dwChunkDataSize, NULL, FILE_CURRENT ) )
-            return HRESULT_FROM_WIN32( GetLastError() );            
-        }
-
-        dwOffset += sizeof(DWORD) * 2;
-        
-        if (dwChunkType == fourcc)
-        {
-            dwChunkSize = dwChunkDataSize;
-            dwChunkDataPosition = dwOffset;
-            return S_OK;
-        }
-        dwOffset += dwChunkDataSize;
-        if (bytesRead >= dwRIFFDataSize) return S_FALSE;
-
-    }
-    return S_OK;
-    
-}
-
-
-HRESULT ReadChunkData(HANDLE hFile, void * buffer, DWORD buffersize, DWORD bufferoffset)
-{
-    HRESULT hr = S_OK;
-    if( INVALID_SET_FILE_POINTER == SetFilePointer( hFile, bufferoffset, NULL, FILE_BEGIN ) )
-        return HRESULT_FROM_WIN32( GetLastError() );
-    DWORD dwRead;
-    if( 0 == ReadFile( hFile, buffer, buffersize, &dwRead, NULL ) )
-        hr = HRESULT_FROM_WIN32( GetLastError() );
-    return hr;
 }

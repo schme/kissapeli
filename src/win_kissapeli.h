@@ -19,15 +19,6 @@ const static int32 windowWidth = (int32)boardWidth;
 const static int32 windowHeight = (int32)boardHeight;
 
 
-// Little-Endian
-#define fourccRIFF 'FFIR'
-#define fourccDATA 'atad'
-#define fourccFMT ' tmf'
-#define fourccWAVE 'EVAW'
-#define fourccXWMA 'AMWX'
-#define fourccDPDS 'sdpd'
-
-
 struct Win_WindowDimensions 
 {
     int32 width;
