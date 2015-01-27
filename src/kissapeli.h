@@ -4,6 +4,9 @@
 #include <stdlib.h> // rand()
 #include <time.h>
 
+//TODO(Kasper): Isolate the audio layer
+#include "win_audio.h"
+
 #include "render.h"
 #include "types.h"
 #include "memorystack.h"
@@ -70,6 +73,6 @@ struct GameInput {
 void gameRender();
 void gameUpdate( GameInput);
 void resizeCallback( int w, int h);
-void gameInit( MemoryStack *);
+void gameInit( MemoryStack *, AudioEngine *);
 
 #endif // KISSAPELI_H_

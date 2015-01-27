@@ -3,8 +3,9 @@
 
 #include "kms.h"
 #include <xaudio2.h>
+#include <vector>
 
-#define SOUNDS_MAX 16;
+#define SOUNDS_MAX 6
 
 
 // Little-Endian
@@ -14,6 +15,12 @@
 #define fourccWAVE 'EVAW'
 #define fourccXWMA 'AMWX'
 #define fourccDPDS 'sdpd'
+
+
+struct AudioCue {
+    XAUDIO2_BUFFER buffer;
+    const char *filename;
+};
 
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChunkDataPosition);
@@ -31,16 +38,21 @@ public:
      */
     int32 loadAudio(const char *filename, bool32 loop, int32 id);
 
-    void playAudio( int32 id);
-
-    IXAudio2 *getInstance();
+    int32 playAudio( int32 id);
 
     ~AudioEngine();
     AudioEngine(){};
 private:
     IXAudio2 *XAudioInstance;
     IXAudio2MasteringVoice *AudioMasterVoice;
-    IXAudio2SourceVoice* sounds[16]; 
+    IXAudio2SourceVoice* voices[SOUNDS_MAX]; 
+    std::vector<AudioCue> sounds;
+    /** use the same format for every voice */
+    WAVEFORMATEXTENSIBLE wfx;
+
+    uint32 voiceIndex;
+
+    void advanceVoiceIndex();
 };
 
 

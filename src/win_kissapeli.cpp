@@ -10,6 +10,7 @@
 #endif
 
 const uint64 memoryStackSize = 4*1024;
+static AudioEngine audioEngine;
 
 static HDC DeviceContext;
 static HGLRC RenderingContext;
@@ -17,7 +18,6 @@ static bool32 globalPlaying;
 static int64 perfCountFrequency;
 static uint64 frame;
 
-static AudioEngine audioEngine;
 
 void
 Win_FreeMemory( void *Memory) {
@@ -350,15 +350,6 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    audioEngine.loadAudio( "assets/audio/song.wav", 1, 0);
-    audioEngine.loadAudio( "assets/audio/beep.wav", 0, 1);
-
-
-#if 0
-    audioEngine.playAudio(0);
-    audioEngine.playAudio(1);
-#endif
-
 
     // Timing
     LARGE_INTEGER LastCounter = Win_GetWallClock();
@@ -374,7 +365,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // TODO: Not like this you idiot.
     assert( gameMemory.memoryPool && " MemoryPool allocation failed!\n");
 
-    gameInit( &gameMemory);
+    gameInit( &gameMemory, &audioEngine);
 
     /**
      * MainLoop
@@ -430,11 +421,13 @@ CALLBACK WinMain(   HINSTANCE Instance,
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
         char timeStrBuffer[256];
-        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", msPerFrame, MCPF);
 
-        OutputDebugStringA( timeStrBuffer);
-        printf( "%s", timeStrBuffer);
+#if ENABLE_CONSOLE
+        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", msPerFrame, MCPF);
         printf( "frame: %llu\n", frame);
+#else 
+        OutputDebugStringA( timeStrBuffer);
+#endif
 #endif
         
     }

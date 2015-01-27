@@ -1,7 +1,10 @@
 #include "win_audio.h"
 
+#define EXAMPLE_WFX_FILE "assets/audio/song.wav"
+
 
 int32 AudioEngine::init() {
+    voiceIndex = 0;
 
     if( FAILED( XAudio2Create( &XAudioInstance, 0 ))) {
         OutputDebugStringA( "FAILED: Creating XAudio2 instance\n");
@@ -12,6 +15,29 @@ int32 AudioEngine::init() {
         OutputDebugStringA( "FAILED: CreateMasteringVoice\n");
         return 0;
     }
+
+    HANDLE example = CreateFile(
+        EXAMPLE_WFX_FILE,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL );
+    DWORD chunkSize;
+    DWORD chunkPosition;
+    FindChunk( example, fourccFMT, chunkSize, chunkPosition);
+    ReadChunkData( example, &wfx, chunkSize, chunkPosition);
+
+    for (int i = 0; i < SOUNDS_MAX; ++i) {
+        if( FAILED( XAudioInstance->CreateSourceVoice( &voices[i], (WAVEFORMATEX*)&wfx))) {
+            XAudioInstance->Release();
+            CoUninitialize();
+            return -(SOUNDS_MAX + i);
+        } else {
+            voices[i]->Start(0);
+        }
+    }
     return 1;
 }
 
@@ -19,8 +45,7 @@ int32 AudioEngine::init() {
 //TODO(Kasper): Destroy previous voice if id overwrites
 int32 AudioEngine::loadAudio(const char *filename, bool32 loop, int32 id ) {
 
-    WAVEFORMATEXTENSIBLE wfx = {};
-    XAUDIO2_BUFFER buffer = {};
+    AudioCue audio = {};
 
     /* Open the audio file */
     HANDLE file = CreateFile(
@@ -34,70 +59,60 @@ int32 AudioEngine::loadAudio(const char *filename, bool32 loop, int32 id ) {
 
     if( INVALID_HANDLE_VALUE == file ) {
         OutputDebugStringA( "FAILED: Audio file not opened\n");
-        //return 0;
+        return 0;
     }
 
     if( INVALID_SET_FILE_POINTER == SetFilePointer( file, 0, NULL, FILE_BEGIN ) ) {
         OutputDebugStringA( "FAILED: Audio file not opened\n");
-        //return 0;
+        return 0;
     }
 
     DWORD dwChunkSize;
     DWORD dwChunkPosition;
-
-    //check the file type, should be fourccWAVE or 'XWMA'
-    FindChunk( file, fourccRIFF, dwChunkSize, dwChunkPosition );
-    DWORD filetype;
-    ReadChunkData( file, &filetype, sizeof(DWORD), dwChunkPosition);
-    if (filetype != fourccWAVE) {
-        OutputDebugStringA( "FAILED: Audio file not recognized as WAVE\n");
-        //return 0;
-    }
-
-    FindChunk( file, fourccFMT, dwChunkSize, dwChunkPosition);
-    ReadChunkData( file, &wfx, dwChunkSize, dwChunkPosition);
 
     //fill out the audio data buffer with the contents of the fourccDATA chunk
     FindChunk(file, fourccDATA, dwChunkSize, dwChunkPosition );
     BYTE *pDataBuffer = new BYTE[dwChunkSize];
     ReadChunkData(file, pDataBuffer, dwChunkSize, dwChunkPosition);
 
-    buffer.AudioBytes = dwChunkSize;        //size of the audio buffer in bytes
-    buffer.pAudioData = pDataBuffer;        //buffer containing audio data
+    audio.buffer.AudioBytes = dwChunkSize;        //size of the audio buffer in bytes
+    audio.buffer.pAudioData = pDataBuffer;        //buffer containing audio data
 
     if( loop ) {
         //buffer.LoopBegin = 0;
-        buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+        audio.buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
     } else {
-        buffer.LoopCount = 0;
+        audio.buffer.LoopCount = 0;
     }
-    buffer.Flags = XAUDIO2_END_OF_STREAM;   // tell the source voice not to expect any data after this buffer
+    audio.buffer.Flags = XAUDIO2_END_OF_STREAM;   // tell the source voice not to expect any data after this buffer
 
-    if( FAILED( XAudioInstance->CreateSourceVoice( &sounds[id], (WAVEFORMATEX*)&wfx))) {
-        OutputDebugStringA( "FAILED: CreateSourceVoice\n");
-        return 0;
-    }
-
-    if( FAILED( sounds[id]->SubmitSourceBuffer( &buffer))) {
-        OutputDebugStringA( "FAILED: SubmitSourceBuffer\n");
-        return 0;
-    }
+    audio.filename = filename;
+    sounds.push_back(audio);
 
     return 1;
 }
 
-void AudioEngine::playAudio( int32 id) {
-    if( sounds[id] != NULL)  {
-        sounds[id]->Start(0);
+
+void AudioEngine::advanceVoiceIndex() {
+    if( voiceIndex >= SOUNDS_MAX - 1) {
+        voiceIndex = 1;
     } else {
-        WIN_OUTPUTDEBUG_I( "FAILED: Played empty sound id: ", id);
+        ++voiceIndex;
     }
 }
 
 
-IXAudio2 *AudioEngine::getInstance() {
-    return XAudioInstance;
+int32 AudioEngine::playAudio( int32 id) {
+    if( sounds.size() > id) {
+        //voices[voiceIndex]->Stop(0);
+        //voices[voiceIndex]->FlushSourceBuffers();
+        voices[voiceIndex]->SubmitSourceBuffer( &sounds[id].buffer);
+        //voices[voiceIndex]->Start(0);
+        advanceVoiceIndex();
+    }
+    return 1;
 }
+
 
 AudioEngine::~AudioEngine() {
     //NOTE(Kasper): Do I even have to implement this?

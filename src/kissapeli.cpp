@@ -1,9 +1,11 @@
 
+#include "win_audio.h"
 #include "kissapeli.h"
 
 static Game *game = NULL;
 static MemoryStack *memory = NULL;
 static GameStatus gameStatus = Playing;
+static AudioEngine *audioEngine;
 
 static uint32 p1lives = 9;
 static uint32 p2lives = 9;
@@ -57,25 +59,35 @@ void worldCollision( Pad *p, Rect *Board) {
 
 void worldCollision( Ball *b, Rect *Board) {
 
+    bool32 collided = false;
+
     glm::vec2 wDim= game->board.dimensions;
 
     if ((*Board)[0].x < 0) {
         --p1lives;
         gameStatus = Resetting;
+        collided = true;
         printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
     }
     if ((*Board)[1].x > wDim.x) {
         --p2lives;
         gameStatus = Resetting;
+        collided = true;
         printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
     }
     if ((*Board)[0].y < 0) {
         b->position.y = b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
+        collided = true;
     }
     if ((*Board)[1].y > wDim.y) {
         b->position.y = wDim.y - b->radius / 2.f;
         b->velocity.y = -(b->velocity.y);
+        collided = true;
+    }
+
+    if( collided) {
+        audioEngine->playAudio(2);
     }
 }
 
@@ -112,6 +124,9 @@ void ballRectCollision( Rect *rectBall, Rect *rectPad) {
 
         ball->velocity.x = ( rightSide) ? -std::abs(ball->velocity.x) :
                                             std::abs( ball->velocity.x);
+
+        //play sound
+        audioEngine->playAudio(1);
     }
 }
 
@@ -257,7 +272,6 @@ Ball getNewBall() {
                   ballRadius
     };
 
-
     return ball;
 }
 
@@ -279,8 +293,17 @@ void initGame() {
     game->player2 = player2;
     game->board = board;
     game->ball = getNewBall();
+
 }
 
+
+void initAudio() {
+    audioEngine->loadAudio( "assets/audio/song.wav", 1, 0);
+    audioEngine->loadAudio( "assets/audio/beepA.wav", 0, 1);
+    audioEngine->loadAudio( "assets/audio/beepF.wav", 0, 2);
+
+    audioEngine->playAudio(0);
+}
 
 void gameRender(uint64 frame) {
 
@@ -295,10 +318,12 @@ void gameRender(uint64 frame) {
 void gameRender() { }
 
 
-void gameInit( MemoryStack* ms) {
+void gameInit( MemoryStack* ms, AudioEngine* ae) {
     memory = ms;
+    audioEngine = ae;
 
     allocateGameMemory();
+    initAudio();
     initGame();
     initRender( vertexBuffer, boardWidth, boardHeight);
 };
