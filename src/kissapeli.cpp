@@ -3,13 +3,14 @@
 #include "win_audio.h"
 #include "kissapeli.h"
 
-static Game *game = NULL;
-static MemoryStack *memory = NULL;
+static Game *game;
+static MemoryStack *memory;
 static GameStatus gameStatus = Playing;
 static AudioEngine *audioEngine;
 
 static uint32 p1lives = 9;
 static uint32 p2lives = 9;
+
 
 void getRect( Rect *in, Pad *p) {
     (*in)[0] = p->position + p->velocity;
@@ -26,7 +27,6 @@ void getRect( Rect *in, Board *w) {
     (*in)[1] = w->dimensions;
 }
 
-
 bool32 aabbCollision( Rect *A, Rect *B ) {
     return ((*A)[0].x < (*B)[1].x &&
             (*A)[1].x > (*B)[0].x &&
@@ -34,139 +34,7 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
             (*A)[1].y > (*B)[0].y );
 }
 
-
-void worldCollision( Pad *p, Rect *Board) {
-
-    glm::vec2 wDim = game->board.dimensions;
-
-    if ((*Board)[0].x < 0) {
-        p->position.x = 0;
-        p->velocity.x = 0;
-    }
-    if ((*Board)[1].x > wDim.x) {
-        p->position.x = wDim.x - p->dimensions.x;
-        p->velocity.x = 0;
-    }
-    if ((*Board)[0].y < 0) {
-        p->position.y = 0;
-        p->velocity.y = 0;
-    }
-    if ((*Board)[1].y > wDim.y) {
-        p->position.y = wDim.y - p->dimensions.y;
-        p->velocity.y = 0;
-    }
-}
-
-
-void worldCollision( Ball *b, Rect *Board) {
-
-    bool32 collided = false;
-
-    glm::vec2 wDim= game->board.dimensions;
-
-    if ((*Board)[0].x < 0) {
-        --p1lives;
-        gameStatus = Resetting;
-        collided = true;
-        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
-    }
-    if ((*Board)[1].x > wDim.x) {
-        --p2lives;
-        gameStatus = Resetting;
-        collided = true;
-        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
-    }
-    if ((*Board)[0].y < 0) {
-        b->position.y = b->radius / 2.f;
-        b->velocity.y = -(b->velocity.y);
-        collided = true;
-    }
-    if ((*Board)[1].y > wDim.y) {
-        b->position.y = wDim.y - b->radius / 2.f;
-        b->velocity.y = -(b->velocity.y);
-        collided = true;
-    }
-
-    if( collided) {
-        audioEngine->playAudio(2);
-    }
-}
-
-
-void applyVelocities(real64 deltaTime) {
-
-    game->player1.position += game->player1.velocity * (deltaTime / timeStep);
-    game->player2.position += game->player2.velocity * (deltaTime / timeStep);
-
-    if( gameStatus == Playing) {
-        game->ball.position += game->ball.velocity * (deltaTime / timeStep);
-    }
-}
-
-    
-void ballRectCollision( Rect *rectBall, Rect *rectPad) {
-
-    if( aabbCollision( rectBall, rectPad)) {
-
-        Ball *ball = &game->ball;
-        bool32 rightSide = ball->position.x > game->board.dimensions.x/2.f;
-
-        float padMiddlePos = (((*rectPad)[1].y - (*rectPad)[0].y) / 2.f) + (*rectPad)[0].y;
-        float english = ballEnglishMax * std::abs( ball->position.y - padMiddlePos ) / ((*rectPad)[1].y - padMiddlePos);
-
-        int velSign = ball->velocity.y < 0 ? -1 : 1;
-        ball->velocity.y = velSign * (ballYSpeed + english);
-
-        if (ball->position.y >= (*rectPad)[1].y || 
-            ball->position.y <= (*rectPad)[0].y ) {
-
-            ball->velocity.y = -ball->velocity.y;
-        }
-
-        ball->velocity.x = ( rightSide) ? -std::abs(ball->velocity.x) :
-                                            std::abs( ball->velocity.x);
-
-        //play sound
-        audioEngine->playAudio(1);
-    }
-}
-
-void collisions(real64 deltaTime) {
-
-    Pad *player1 = &game->player1;
-    Pad *player2 = &game->player2;
-    Ball *ball = &game->ball;
-
-    Rect rectPlayer1;
-    Rect rectPlayer2;
-    Rect rectBall;
-
-    getRect( &rectPlayer1, player1);
-    getRect( &rectPlayer2, player2);
-    getRect( &rectBall, ball);
-
-    assert( rectPlayer1 && "rectPlayer1 is null");
-    assert( rectPlayer2 && "rectPlayer2 is null");
-    assert( rectBall && "rectBall is null");
-
-    worldCollision( player1, &rectPlayer1);
-    worldCollision( player2, &rectPlayer2);
-    worldCollision( ball, &rectBall);
-
-    /** collisionHandling for my ballz */
-    ballRectCollision( &rectBall, &rectPlayer1);
-    ballRectCollision( &rectBall, &rectPlayer2);
-}
-
-
-void runSimulation(real64 deltaTime) {
-    
-    collisions(deltaTime);
-    applyVelocities(deltaTime);
-}
-
-/**
- * Order: background, player1 , player2 
+/** * Order: background, player1 , player2 
  * TODO: Tidy this mofo uuuup! Clean your room! Do the dishes!
  */
 void gameVertices() {
@@ -250,7 +118,135 @@ void gameVertices() {
     };
 
     memcpy( index, colors, sizeof(colors));
+}
 
+
+void worldCollision( Pad *p, Rect *Board) {
+
+    glm::vec2 wDim = game->board.dimensions;
+
+    if ((*Board)[0].x < 0) {
+        p->position.x = 0;
+        p->velocity.x = 0;
+    }
+    if ((*Board)[1].x > wDim.x) {
+        p->position.x = wDim.x - p->dimensions.x;
+        p->velocity.x = 0;
+    }
+    if ((*Board)[0].y < 0) {
+        p->position.y = 0;
+        p->velocity.y = 0;
+    }
+    if ((*Board)[1].y > wDim.y) {
+        p->position.y = wDim.y - p->dimensions.y;
+        p->velocity.y = 0;
+    }
+}
+
+
+void worldCollision( Ball *b, Rect *Board) {
+
+    bool32 collidedGoal = false;
+    bool32 collidedEdge = false;
+
+    glm::vec2 wDim= game->board.dimensions;
+
+    if ((*Board)[0].x < 0) {
+        --p1lives;
+        gameStatus = Resetting;
+        collidedGoal = true;
+    } else if ((*Board)[1].x > wDim.x) {
+        --p2lives;
+        gameStatus = Resetting;
+        collidedGoal = true;
+    } else if ((*Board)[0].y < 0) {
+        b->position.y = b->radius / 2.f;
+        b->velocity.y = -(b->velocity.y);
+        collidedEdge = true;
+    } else if ((*Board)[1].y > wDim.y) {
+        b->position.y = wDim.y - b->radius / 2.f;
+        b->velocity.y = -(b->velocity.y);
+        collidedEdge = true;
+    }
+
+    if( collidedGoal) {
+        audioEngine->playAudio(3);
+        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
+    } else if( collidedEdge) {
+        audioEngine->playAudio(2);
+    }
+}
+
+
+void applyVelocities(real64 deltaTime) {
+
+    game->player1.position += game->player1.velocity * (deltaTime / timeStep);
+    game->player2.position += game->player2.velocity * (deltaTime / timeStep);
+
+    if( gameStatus == Playing) {
+        game->ball.position += game->ball.velocity * (deltaTime / timeStep);
+    }
+}
+
+    
+void ballRectCollision( Rect *rectBall, Rect *rectPad) {
+
+    if( aabbCollision( rectBall, rectPad)) {
+
+        Ball *ball = &game->ball;
+        bool32 rightSide = ball->position.x > game->board.dimensions.x/2.f;
+
+        /** already collided and heading the other way, ignore */
+        if( (rightSide && ball->velocity.x < 0) ||
+            (!rightSide && ball->velocity.x > 0)) {
+            return;
+        }
+
+        float padMiddlePos = (((*rectPad)[1].y - (*rectPad)[0].y) / 2.f) + (*rectPad)[0].y;
+        float english = ballEnglishMax * std::abs( ball->position.y - padMiddlePos ) / ((*rectPad)[1].y - padMiddlePos);
+
+        int velSign = ball->velocity.y < 0 ? -1 : 1;
+        ball->velocity.y = velSign * (ballYSpeed + english);
+        ball->velocity.x = ( rightSide) ? -std::abs(ball->velocity.x) :
+                                            std::abs( ball->velocity.x);
+
+        //play sound
+        audioEngine->playAudio(1);
+    }
+}
+
+void collisions(real64 deltaTime) {
+
+    Pad *player1 = &game->player1;
+    Pad *player2 = &game->player2;
+    Ball *ball = &game->ball;
+
+    Rect rectPlayer1;
+    Rect rectPlayer2;
+    Rect rectBall;
+
+    getRect( &rectPlayer1, player1);
+    getRect( &rectPlayer2, player2);
+    getRect( &rectBall, ball);
+
+    assert( rectPlayer1 && "rectPlayer1 is null");
+    assert( rectPlayer2 && "rectPlayer2 is null");
+    assert( rectBall && "rectBall is null");
+
+    worldCollision( player1, &rectPlayer1);
+    worldCollision( player2, &rectPlayer2);
+    worldCollision( ball, &rectBall);
+
+    /** collisionHandling for my ballz */
+    ballRectCollision( &rectBall, &rectPlayer1);
+    ballRectCollision( &rectBall, &rectPlayer2);
+}
+
+
+void runSimulation(real64 deltaTime) {
+    
+    collisions(deltaTime);
+    applyVelocities(deltaTime);
 }
 
 
@@ -302,8 +298,11 @@ void initAudio() {
     audioEngine->loadAudio( "assets/audio/song.wav", 1, 0);
     audioEngine->loadAudio( "assets/audio/beepA.wav", 0, 1);
     audioEngine->loadAudio( "assets/audio/beepF.wav", 0, 2);
+    audioEngine->loadAudio( "assets/audio/wouu.wav", 0, 3);
 
+#if 0
     audioEngine->playAudio(0);
+#endif
 }
 
 void gameRender(uint64 frame) {

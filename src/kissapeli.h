@@ -4,7 +4,7 @@
 #include <stdlib.h> // rand()
 #include <time.h>
 
-//TODO(Kasper): Isolate the audio layer
+//TODO(kasper): Isolate the audio layer
 #include "win_audio.h"
 
 #include "render.h"
