@@ -1,6 +1,7 @@
 ### Stuff ###
 *.exe
 *.wav
+*audio/license.txt
 
 
 # Created by https://www.gitignore.io

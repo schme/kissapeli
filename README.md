@@ -5,3 +5,6 @@ I've made short video [clips](http://www.youtube.com/playlist?list=PLmhCznL0nyhn
 
 ## Compiling
 When compiling from scratch you need to have the last DirectSDK version of XAudio2, not the Windows8 version currently shipping on Windows7 and others. Familiarize yourself with the makefile.
+
+## Assets
+Currently only available [here](https://drive.google.com/file/d/0B1nopWXhvGSBVHdqUGVnNjVSZDg/view?usp=sharing).
