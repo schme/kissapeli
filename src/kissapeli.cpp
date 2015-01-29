@@ -1,4 +1,5 @@
 
+//TODO(Kasper): Move away
 #include "win_audio.h"
 #include "kissapeli.h"
 
@@ -92,13 +93,13 @@ void worldCollision( Ball *b, Rect *Board) {
 }
 
 
-void applyVelocities() {
+void applyVelocities(real64 deltaTime) {
 
-    game->player1.position += game->player1.velocity;
-    game->player2.position += game->player2.velocity;
+    game->player1.position += game->player1.velocity * (deltaTime / timeStep);
+    game->player2.position += game->player2.velocity * (deltaTime / timeStep);
 
     if( gameStatus == Playing) {
-        game->ball.position += game->ball.velocity;
+        game->ball.position += game->ball.velocity * (deltaTime / timeStep);
     }
 }
 
@@ -130,7 +131,7 @@ void ballRectCollision( Rect *rectBall, Rect *rectPad) {
     }
 }
 
-void collisions() {
+void collisions(real64 deltaTime) {
 
     Pad *player1 = &game->player1;
     Pad *player2 = &game->player2;
@@ -158,10 +159,10 @@ void collisions() {
 }
 
 
-void runSimulation() {
+void runSimulation(real64 deltaTime) {
     
-    collisions();
-    applyVelocities();
+    collisions(deltaTime);
+    applyVelocities(deltaTime);
 }
 
 /**
@@ -395,7 +396,7 @@ void gameUpdate(GameInput input) {
     GameStatus lastStatus = gameStatus;
 
     HandleInput(input);
-    runSimulation();
+    runSimulation(input.deltaTime);
 
     switch (gameStatus) { 
         case Resetting: {

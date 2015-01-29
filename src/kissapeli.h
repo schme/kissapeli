@@ -12,6 +12,7 @@
 #include "memorystack.h"
 
 const real32 goalResetTime = 1000; //in ms
+const real32 timeStep = 16.6f;
 
 const real32 padPadding = 128;
 const real32 padInitWidth = 12;

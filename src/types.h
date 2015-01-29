@@ -18,6 +18,4 @@ typedef float real64;
 
 typedef uint32_t bool32;
 
-
-
 #endif // TYPES_H_
