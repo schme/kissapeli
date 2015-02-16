@@ -107,11 +107,13 @@ Win_CreateGLContext()
 
     // OpenGL Extensions
 
-    //if (wglewIsSupported( "WGL_EXT_swap_control")) {
-        //wglSwapIntervalEXT(1);
-    //}  else {
-        //wglSwapIntervalEXT(1);
-    //}
+#if VSYNC
+    if (wglewIsSupported( "WGL_EXT_swap_control")) {
+        wglSwapIntervalEXT(1);
+    }  else {
+        wglSwapIntervalEXT(1);
+    }
+#endif
 
     return 1;
 }
@@ -354,7 +356,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
     // Timing
     LARGE_INTEGER LastCounter = Win_GetWallClock();
     uint64 LastCycleCount = __rdtsc();
-    real64 msPerFrame = 0;
+    real64 msPerFrame = 0.0;
 
     MemoryStack gameMemory = {};
     gameMemory.stackSize = memoryStackSize;
@@ -391,9 +393,11 @@ CALLBACK WinMain(   HINSTANCE Instance,
             {
                 DWORD SleepMS = (DWORD)(1000.0f * (targetSecondsPerFrame -
                                                     secondsElapsedForFrame));
+#if !VSYNC
                 if( SleepMS > 0) {
                     Sleep(SleepMS);
                 }
+#endif
             }
 
             float testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
@@ -416,19 +420,21 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         ++frame;
 
-#if BUILD_INTERNAL && LOGLEVEL > 1
         double FPS = (double)perfCountFrequency / (double)counterElapsed;
         double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
         char timeStrBuffer[256];
 
-#if ENABLE_CONSOLE
-        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f\n", msPerFrame, MCPF);
-        printf( "frame: %llu\n", frame);
-#else 
+        _snprintf_s( timeStrBuffer, sizeof( timeStrBuffer), "%.02fms/f, %.02fmc/f, frame %llu \n", msPerFrame, MCPF, frame);
+
         OutputDebugStringA( timeStrBuffer);
+        if( frame % 20 == 0) {
+            SetWindowText( Window, timeStrBuffer);
+        }
+#if LOGLEVEL > 1
+        printf( "frame: %llu\n", frame);
 #endif
-#endif
+
         
     }
 

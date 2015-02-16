@@ -23,6 +23,7 @@ enum GameStatus {
 };
 
 struct GameState {
+    real64 deltaTime;
     GameStatus state;
     uint32 p1lives;
     uint32 p2lives;
@@ -30,6 +31,6 @@ struct GameState {
 
 int initRender(void* vertexBuffer, real32 width, real32 height);
 void resize(int w, int h);
-void draw(uint64 frame, GameState state);
+void draw(uint64 frame, GameState gameState);
 
 #endif // RENDER_H_

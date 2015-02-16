@@ -24,10 +24,10 @@ const real32 ballEnglishMax = 4;
 static real32 ballRadius = 12;
 static real32 padVelocityMod = 10;
 
-static glm::vec4 p1ObjectColor = glm::vec4( 1.f, 0.f, 0.f, 1.f);
-static glm::vec4 p2ObjectColor = glm::vec4( 0.f, 1.f, 0.f, 1.f);
-static glm::vec4 bObjectColor = glm::vec4( 0.f, 0.f, 1.f, 1.f);
-static glm::vec4 bgObjectColor = glm::vec4( .1f, .1f, .1f, 1.f);
+static glm::vec4 player1Color = glm::vec4( 0.7f, 0.0f, 0.8f, 1.0f);
+static glm::vec4 player2Color = glm::vec4( 0.8f, 0.0f, 0.7f, 1.0f);
+static glm::vec4 ballColor = glm::vec4( 0.8f, 0.0f, 0.8f, 1.0f);
+static glm::vec4 backgroundColor = glm::vec4( 0.0f, 0.0f, 0.05f, 1.0f);
 
 static real32 boardWidth = 1024;
 static real32 boardHeight = 512;
@@ -59,6 +59,8 @@ struct Game {
 };
 
 struct GameInput {
+    real64 deltaTime;
+    uint64 frame;
     bool32 KEY_W;
     bool32 KEY_A;
     bool32 KEY_S;
@@ -67,8 +69,6 @@ struct GameInput {
     bool32 KEY_LEFT;
     bool32 KEY_DOWN;
     bool32 KEY_RIGHT;
-    real64 deltaTime;
-    uint64 frame;
 };
 
 void gameRender();

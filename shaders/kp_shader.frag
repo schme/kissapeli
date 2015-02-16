@@ -1,55 +1,40 @@
 #version 440
+
+#define BACKGROUND 0
+#define PLAYER1 1
+#define PLAYER2 2
+#define BALL 3
+
 out vec4 color;
-flat in vec4 objColor;
+flat in vec4 vertColor;
 
 uniform vec2 screenSize;
 uniform int frame;
+uniform int object;
+/*uniform float deltaTime;*/
 
-vec4 ballColor = vec4(1.0, 0.2, 1.0, 1.0);
-vec4 player1Color = vec4(0.9, 0.3, 0.5, 1.0);
-vec4 player2Color = vec4(0.5, 0.3, 0.9, 1.0);
-vec4 middleBarColor = vec4(0.7, 0.7, 0.9, 1.0);
-vec4 bg_color = vec4(0.0, 0.0, 0.05, 1.0);
-
-float FPS = 60.0;
-float middleBarHalfWidth = 0.002;
 
 void main()
 {
-    vec4 newColor = objColor;
-    vec2 normMiddle = screenSize / 2.0 / screenSize;
-    vec2 normCoord = gl_FragCoord.xy / screenSize;
+    color = vertColor;
 
-    float dirtyTime = frame / FPS;  // lol
+    if( object == BACKGROUND) {
 
-    /**
-     * Different objects are passed in with different colors (objColor)
-     * player1:     1,0,0,1
-     * player2:     0,1,0,1
-     * ball:        0,0,1,1
-     * background:  .1,.1,.1,1
-     */
+        const vec4 middleBarColor = vec4(0.7, 0.7, 0.9, 1.0);
+        const float middleBarHalfWidth = 0.002;
+        const float FPS = 60.0;
 
-    // player 1
-    if( objColor == vec4( 1.0, 0.0, 0.0, 1.0) ) {
-        newColor = player1Color;
 
-    // player 2
-    } else if( objColor == vec4( 0.0, 1.0, 0.0, 1.0) ) {
-        newColor = player2Color;
+        vec2 normMiddle = screenSize / 2.0 / screenSize;
+        vec2 normCoord = gl_FragCoord.xy / screenSize;
 
-    // ball
-    } else if( objColor == vec4( 0.0, 0.0, 1.0, 1.0) ) {
-        newColor = ballColor;
-
-    // background
-    } else if( objColor == vec4( 0.1, 0.1, 0.1, 1.0) ) {
+        float dirtyTime = frame / FPS;  // lol
 
         // middle bar
         if( normCoord.x <= normMiddle.x + middleBarHalfWidth &&
             normCoord.x >= normMiddle.x - middleBarHalfWidth) {
 
-            newColor = middleBarColor;
+            color = middleBarColor;
 
         } else {
 
@@ -66,11 +51,9 @@ void main()
                 wave_color += vec4(wave_width * 1.0, wave_width, wave_width * 1.5, 1.0);
             }
             
-            newColor = bg_color + wave_color;
+            color += wave_color;
         }
     }
-
-    color = newColor;
 
 }
 

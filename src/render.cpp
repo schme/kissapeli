@@ -4,6 +4,10 @@
 #include <fstream>
 #include <sstream>
 
+enum {
+    BACKGROUND, PLAYER1, PLAYER2, BALL
+};
+
 static GLuint shaderProgram = 0;
 static GLuint vbo = 0;
 static GLuint vao = 0;
@@ -19,13 +23,15 @@ static uint32 vertexDataSize = 32 * sizeof(float);
 GLuint screenSizeUnif;
 GLuint boardSizeUnif;
 GLuint frameUnif;
+GLuint deltaTimeUnif;
+GLuint objectUnif;
 
 void initVertexBuffer() {
     
     glGenBuffers(1, &vbo);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
-    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STREAM_DRAW); 
+    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW); 
     glBindBuffer( GL_ARRAY_BUFFER, 0);
 
 }
@@ -47,14 +53,18 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     }
 
     glUseProgram( shaderProgram);
+
     screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize"); 
     boardSizeUnif = glGetUniformLocation( shaderProgram, "boardSize");
     frameUnif = glGetUniformLocation( shaderProgram, "frame"); 
+    objectUnif = glGetUniformLocation( shaderProgram, "object");
+    deltaTimeUnif = glGetUniformLocation( shaderProgram, "deltaTime");
+
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUniform2f( boardSizeUnif, boardWidth, boardHeight);
     glUseProgram(0);
 
-    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor( 0.5f, 1.0f, 0.5f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -66,6 +76,7 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     //glDepthMask( GL_TRUE);
     //glDepthFunc( GL_LEQUAL);
     //glDepthRange( 1.0f, 0.0f);
+    //glClearDepth(1.0f);
 
     glEnable( GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -75,12 +86,13 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 }
 
 
-void draw(uint64 frame, GameState state) {
+void draw(uint64 frame, GameState gameState) {
 
     glClear( GL_COLOR_BUFFER_BIT );
     glUseProgram( shaderProgram);
 
     glUniform1i( frameUnif, (uint32)frame);
+    glUniform1f( deltaTimeUnif, gameState.deltaTime);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
     glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);
@@ -90,8 +102,17 @@ void draw(uint64 frame, GameState state) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(vertexDataSize));
 
-    // TODO: Change to triangles
-    glDrawArrays( GL_QUADS, 0, 16);
+    glUniform1i( objectUnif, BACKGROUND);
+    glDrawArrays( GL_QUADS, 0, 4);
+
+    glUniform1i( objectUnif, PLAYER1);
+    glDrawArrays( GL_QUADS, 4, 4);
+
+    glUniform1i( objectUnif, PLAYER2);
+    glDrawArrays( GL_QUADS, 8, 4);
+
+    glUniform1i( objectUnif, BALL);
+    glDrawArrays( GL_QUADS, 12, 4);
 
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);

@@ -1,7 +1,9 @@
 
-//TODO(Kasper): Move away
-#include "win_audio.h"
 #include "kissapeli.h"
+
+enum {
+    BACKGROUND, PLAYER1, PLAYER2, BALL
+};
 
 static Game *game;
 static MemoryStack *memory;
@@ -34,18 +36,13 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
             (*A)[1].y > (*B)[0].y );
 }
 
-/** * Order: background, player1 , player2 
+/** * Order: background, player1 , player2, ball
  * TODO: Tidy this mofo uuuup! Clean your room! Do the dishes!
  */
 void gameVertices() {
 
     char* index = (char*)vertexBuffer;
     
-    /**
-     * TODO: Fix this workaround. Shouldn't be needed
-     * Used currently for setting the background "object" color
-     * to let the fragment shader recognize background from the rest
-     */
     float boardVertices[] = { 0.f, 0.f,
                    game->board.dimensions.x, 0.f,
                    game->board.dimensions.x, game->board.dimensions.y,
@@ -73,14 +70,14 @@ void gameVertices() {
     (*qa)[8] = p->position.x; 
     (*qa)[9] = p->position.y;
 
-    (*qa)[10] =p->position.x + p->dimensions.x; 
-    (*qa)[11] =p->position.y;
+    (*qa)[10] = p->position.x + p->dimensions.x; 
+    (*qa)[11] = p->position.y;
 
-    (*qa)[12] =p->position.x + p->dimensions.x; 
-    (*qa)[13] =p->position.y + p->dimensions.y;
+    (*qa)[12] = p->position.x + p->dimensions.x; 
+    (*qa)[13] = p->position.y + p->dimensions.y;
 
-    (*qa)[14] =p->position.x; 
-    (*qa)[15] =p->position.y + p->dimensions.y;
+    (*qa)[14] = p->position.x; 
+    (*qa)[15] = p->position.y + p->dimensions.y;
 
     index += sizeof( PlayerArray);
 
@@ -96,25 +93,25 @@ void gameVertices() {
 
     //TODO: is ugly pls do something
     float colors[] = { 
-        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
-        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
-        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
-        bgObjectColor.r, bgObjectColor.g, bgObjectColor.b, bgObjectColor.a,
+        backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
+        backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
+        backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
+        backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
 
-        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
-        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
-        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
-        p1ObjectColor.r, p1ObjectColor.g, p1ObjectColor.b, p1ObjectColor.a,
+        player1Color.r, player1Color.g, player1Color.b, player1Color.a,
+        player1Color.r, player1Color.g, player1Color.b, player1Color.a,
+        player1Color.r, player1Color.g, player1Color.b, player1Color.a,
+        player1Color.r, player1Color.g, player1Color.b, player1Color.a,
 
-        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
-        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
-        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
-        p2ObjectColor.r, p2ObjectColor.g, p2ObjectColor.b, p2ObjectColor.a,
+        player2Color.r, player2Color.g, player2Color.b, player2Color.a,
+        player2Color.r, player2Color.g, player2Color.b, player2Color.a,
+        player2Color.r, player2Color.g, player2Color.b, player2Color.a,
+        player2Color.r, player2Color.g, player2Color.b, player2Color.a,
 
-        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
-        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
-        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
-        bObjectColor.r, bObjectColor.g, bObjectColor.b, bObjectColor.a,
+        ballColor.r, ballColor.g, ballColor.b, ballColor.a,
+        ballColor.r, ballColor.g, ballColor.b, ballColor.a,
+        ballColor.r, ballColor.g, ballColor.b, ballColor.a,
+        ballColor.r, ballColor.g, ballColor.b, ballColor.a,
     };
 
     memcpy( index, colors, sizeof(colors));
@@ -305,10 +302,10 @@ void initAudio() {
 #endif
 }
 
-void gameRender(uint64 frame) {
+void gameRender(uint64 frame, real64 deltaTime) {
 
     GameState state = {
-        gameStatus, p1lives, p2lives
+        deltaTime, gameStatus, p1lives, p2lives
     };
     gameVertices();
     draw( frame, state);
@@ -415,7 +412,7 @@ void gameUpdate(GameInput input) {
         default: break;
     }
 
-    gameRender( input.frame);
+    gameRender( input.frame, input.deltaTime);
 }
 
 
