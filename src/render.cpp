@@ -92,7 +92,7 @@ void draw(uint64 frame, GameState gameState) {
     glUseProgram( shaderProgram);
 
     glUniform1i( frameUnif, (uint32)frame);
-    glUniform1f( deltaTimeUnif, gameState.deltaTime);
+    glUniform1f( deltaTimeUnif, (real32)gameState.deltaTime);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
     glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);

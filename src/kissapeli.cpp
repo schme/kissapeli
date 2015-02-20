@@ -175,8 +175,9 @@ void worldCollision( Ball *b, Rect *Board) {
 }
 
 
-void applyVelocities(real64 deltaTime) {
+void applyVelocities(real64 ddeltaTime) {
 
+    real32 deltaTime = (real32)ddeltaTime;
     game->player1.position += game->player1.velocity * (deltaTime / timeStep);
     game->player2.position += game->player2.velocity * (deltaTime / timeStep);
 
@@ -310,9 +311,6 @@ void gameRender(uint64 frame, real64 deltaTime) {
     gameVertices();
     draw( frame, state);
 }
-
-
-void gameRender() { }
 
 
 void gameInit( MemoryStack* ms, AudioEngine* ae) {

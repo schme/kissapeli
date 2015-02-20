@@ -14,6 +14,7 @@ static AudioEngine audioEngine;
 
 static HDC DeviceContext;
 static HGLRC RenderingContext;
+static bool32 globalCursor = true;
 static bool32 globalPlaying;
 static int64 perfCountFrequency;
 static uint64 frame;
@@ -149,7 +150,7 @@ Win_WindowProc(  HWND Window,
         case WM_PAINT: {
             PAINTSTRUCT paint;
             BeginPaint( Window, &paint);
-            gameRender();
+            //gameRender();
             EndPaint( Window, &paint);
         } break;
         case WM_SIZE: {
@@ -161,6 +162,13 @@ Win_WindowProc(  HWND Window,
             DeviceContext = GetDC(Window);
             if(Win_CreateGLContext()) {
                 globalPlaying = true;
+            }
+        } break;
+        case WM_SETCURSOR: {
+            if( globalCursor) {
+                result = DefWindowProcA( Window, Message, wParam, lParam);
+            } else {
+                SetCursor(0);
             }
         } break;
         case WM_ACTIVATEAPP: {
@@ -294,7 +302,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
         assert(!"AllocConsole() failed");
     }
 
-    int winStdOutFileDesc = _open_osfhandle((intptr_t)GetStdHandle( STD_OUTPUT_HANDLE), _O_TEXT);
+    int32 winStdOutFileDesc = _open_osfhandle((intptr_t)GetStdHandle( STD_OUTPUT_HANDLE), _O_TEXT);
     FILE *fpout = _fdopen( winStdOutFileDesc, "w");
     *stdout = *fpout;
     setvbuf( stdout, NULL, _IONBF, 0);
@@ -309,13 +317,14 @@ CALLBACK WinMain(   HINSTANCE Instance,
     bool32 sleepIsGranular = (timeBeginPeriod( 1) == TIMERR_NOERROR);
     
 #define GameUpdateHz 60
-    float targetSecondsPerFrame = 1.0f / (float)GameUpdateHz; 
+    real32 targetSecondsPerFrame = 1.0f / (real32)GameUpdateHz; 
 
     // WindowClass
     WNDCLASSA WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     WindowClass.lpfnWndProc = Win_WindowProc;
     WindowClass.hInstance = Instance;
+    WindowClass.hCursor = LoadCursor(0, IDC_CROSS);
     //WindowClass.hIcon;
     WindowClass.lpszClassName = "KissapeliWindowClass";
 
@@ -383,8 +392,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         // Timing
         LARGE_INTEGER workCounter = Win_GetWallClock();
-        float workSecondElapsed = Win_GetSecondsElapsed( LastCounter, workCounter);
-        float secondsElapsedForFrame = workSecondElapsed;
+        real32 workSecondElapsed = Win_GetSecondsElapsed( LastCounter, workCounter);
+        real32 secondsElapsedForFrame = workSecondElapsed;
 
 
         if( secondsElapsedForFrame < targetSecondsPerFrame )
@@ -400,7 +409,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
 #endif
             }
 
-            float testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
+            real32 testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
         } else {
             OutputDebugStringA( "MISSED FRAME\n"); 
         }
@@ -420,8 +429,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         ++frame;
 
-        double FPS = (double)perfCountFrequency / (double)counterElapsed;
-        double MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
+        real64 FPS = (double)perfCountFrequency / (double)counterElapsed;
+        real64 MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
         char timeStrBuffer[256];
 
