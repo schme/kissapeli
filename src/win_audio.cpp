@@ -1,5 +1,6 @@
 #include "win_audio.h"
 
+/** We use this files WFX format for all files */
 #define EXAMPLE_WFX_FILE "assets/audio/song.wav"
 
 
@@ -115,7 +116,7 @@ int32 AudioEngine::playAudio( int32 id) {
 
 
 AudioEngine::~AudioEngine() {
-    //NOTE(Kasper): Do I even have to implement this?
+    //NOTE(Kasper): Do I even have to?
 }
 
 

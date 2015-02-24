@@ -14,6 +14,7 @@ static AudioEngine audioEngine;
 
 static HDC DeviceContext;
 static HGLRC RenderingContext;
+static WINDOWPLACEMENT windowPlacement = { sizeof( WINDOWPLACEMENT)};
 static bool32 globalCursor = true;
 static bool32 globalPlaying;
 static int64 perfCountFrequency;
@@ -38,6 +39,35 @@ Win_GetWindowDimensions( HWND Window) {
     result.height = ClientRect.bottom - ClientRect.top;
 
     return result;
+}
+
+
+void
+Win_ToggleFullscreen( HWND hwnd)
+{
+    DWORD dwStyle = GetWindowLong( hwnd, GWL_STYLE);
+    if( dwStyle & WS_OVERLAPPEDWINDOW) {
+        MONITORINFO mi = { sizeof(mi) };
+        if( GetWindowPlacement( hwnd, &windowPlacement) &&
+            GetMonitorInfo( MonitorFromWindow( hwnd,
+                    MONITOR_DEFAULTTOPRIMARY), &mi)) 
+            {
+            SetWindowLong( hwnd, GWL_STYLE,
+                    dwStyle & ~WS_OVERLAPPEDWINDOW);
+            SetWindowPos( hwnd, HWND_TOP,
+                   mi.rcMonitor.left, mi.rcMonitor.top,
+                   mi.rcMonitor.right - mi.rcMonitor.left,
+                   mi.rcMonitor.bottom - mi.rcMonitor.top,
+                   SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            }
+     } else {
+       SetWindowLong(hwnd, GWL_STYLE,
+                     dwStyle | WS_OVERLAPPEDWINDOW);
+       SetWindowPlacement(hwnd, &windowPlacement);
+       SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                    SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+     }
 }
 
 
@@ -273,9 +303,16 @@ Win_HandleMessages(GameInput *input) {
                     } // VKCode
                 } //wasDown != isDown
 
-                bool32 AltKeyWasDown = (Message.lParam & (1 << 29));
-                if(( VKCode == VK_F4) && AltKeyWasDown) {
-                    globalPlaying = false;
+                if( isDown) {
+                    bool32 AltKeyWasDown = (Message.lParam & (1 << 29));
+                    if(( VKCode == VK_F4) && AltKeyWasDown) {
+                        globalPlaying = false;
+                    }
+                    if(( VKCode == VK_RETURN) && AltKeyWasDown) {
+                        if( Message.hwnd) {
+                            Win_ToggleFullscreen( Message.hwnd);
+                        }
+                    }
                 }
 
             } break;
@@ -361,6 +398,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
+    SetWindowText( Window, "Kissapeli NextGen");
 
     // Timing
     LARGE_INTEGER LastCounter = Win_GetWallClock();
@@ -429,6 +467,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
         ++frame;
 
+#if BUILD_INTERNAL
         real64 FPS = (double)perfCountFrequency / (double)counterElapsed;
         real64 MCPF = ((double)cyclesElapsed / (1000.0f * 1000.0f));
 
@@ -440,6 +479,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
         if( frame % 20 == 0) {
             SetWindowText( Window, timeStrBuffer);
         }
+#endif
 #if LOGLEVEL > 1
         printf( "frame: %llu\n", frame);
 #endif
