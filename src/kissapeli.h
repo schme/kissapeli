@@ -15,14 +15,15 @@ const real32 goalResetTime = 1000; //in ms
 const real32 timeStep = 16.6f;
 
 const real32 padPadding = 128;
-const real32 padInitWidth = 12;
-const real32 padInitHeight = 32; 
+const real32 padWidth = 12;
+const real32 padHeight = 32; 
 const real32 ballXSpeed = 5;
 const real32 ballYSpeed = 3;
 const real32 ballEnglishMax = 4;
 
 static real32 ballRadius = 12;
 static real32 padVelocityMod = 10;
+static real32 padVelocityModAI = 8;
 
 static glm::vec4 player1Color = glm::vec4( 0.7f, 0.0f, 0.8f, 1.0f);
 static glm::vec4 player2Color = glm::vec4( 0.8f, 0.0f, 0.7f, 1.0f);

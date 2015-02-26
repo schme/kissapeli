@@ -36,6 +36,46 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
             (*A)[1].y > (*B)[0].y );
 }
 
+
+/**
+ * Decypher only if you're mad.
+ */
+void padAI()
+{
+
+    static bool32 chasing = false;
+    real32 relaxArea;
+    if( game->ball.position.x <= (game->board.dimensions.x/2.0)) {
+        relaxArea = padHeight * 2.0f;
+    } else {
+        relaxArea = 1.0f;
+    }
+
+    real32 padCenterY = game->player2.position.y + padHeight/2.0f;
+    real32 ballY = game->ball.position.y;
+    real32 diffY = std::abs(ballY - padCenterY);
+
+    if( chasing) {
+        if( (diffY - relaxArea) < 0.0f) {
+            chasing = false;
+            game->player2.velocity.y = 0.0f;
+
+        } else {
+            if (diffY < padVelocityModAI) {
+                game->player2.velocity.y = diffY;
+            } else {
+                game->player2.velocity.y = padVelocityModAI *
+                    (ballY - padCenterY < 0.0f ? -1.0f : 1.0f);
+            }
+        }
+
+    } else if( diffY - relaxArea > 0.0f) {
+        chasing = true;
+    }
+
+}
+
+
 /** * Order: background, player1 , player2, ball
  * TODO: Tidy this mofo uuuup! Clean your room! Do the dishes!
  */
@@ -92,7 +132,8 @@ void gameVertices() {
     index += sizeof( ballVertices);
 
     //TODO: is ugly pls do something
-    float colors[] = { 
+    real32 colors[] = { 
+
         backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
         backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
         backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
@@ -276,12 +317,12 @@ void initGame() {
     srand((uint32)time(NULL));
     Board board = { glm::vec2( boardWidth, boardHeight ) };
 
-    Pad player1 = { glm::vec2( padPadding, (real32)boardHeight/2.f - padInitHeight/2.f),
-                    glm::vec2(padInitWidth, padInitHeight) 
+    Pad player1 = { glm::vec2( padPadding, (real32)boardHeight/2.f - padHeight/2.f),
+                    glm::vec2(padWidth, padHeight) 
     };
-    Pad player2 = { glm::vec2(  boardWidth - padPadding - padInitWidth, 
-                                boardHeight/2.f - padInitHeight/2.f),
-                    glm::vec2(padInitWidth, padInitHeight) 
+    Pad player2 = { glm::vec2(  boardWidth - padPadding - padWidth, 
+                                boardHeight/2.f - padHeight/2.f),
+                    glm::vec2(padWidth, padHeight) 
     };
 
     game->player1 = player1;
@@ -331,25 +372,13 @@ void changeInputState( GameInput *state, GameInput input) {
     if( input.KEY_S) {
         (*state).KEY_S = !(*state).KEY_S;
     } 
-    if( input.KEY_A) {
-        (*state).KEY_A = !(*state).KEY_A;
-    } 
-    if( input.KEY_D) {
-        (*state).KEY_D = !(*state).KEY_D;
-    } 
-    if( input.KEY_UP) {
-        (*state).KEY_UP = !(*state).KEY_UP;
-    } 
-    if( input.KEY_DOWN) {
-        (*state).KEY_DOWN = !(*state).KEY_DOWN;
-    } 
-    if( input.KEY_LEFT) {
-        (*state).KEY_LEFT = !(*state).KEY_LEFT;
-    } 
-    if( input.KEY_RIGHT) {
-        (*state).KEY_RIGHT = !(*state).KEY_RIGHT;
-    }
 
+    //if( input.KEY_UP) {
+        //(*state).KEY_UP = !(*state).KEY_UP;
+    //} 
+    //if( input.KEY_DOWN) {
+        //(*state).KEY_DOWN = !(*state).KEY_DOWN;
+    //} 
 }
 
 
@@ -371,15 +400,15 @@ void HandleInput( GameInput input) {
     }
 
     /** Player2 **/
-    if( state.KEY_UP) {
-        game->player2.velocity.y = padVelocityMod;
+    //if( state.KEY_UP) {
+        //game->player2.velocity.y = padVelocityMod;
 
-    } else if( state.KEY_DOWN) {
-        game->player2.velocity.y = -padVelocityMod;
+    //} else if( state.KEY_DOWN) {
+        //game->player2.velocity.y = -padVelocityMod;
 
-    } else {
-        game->player2.velocity.y = 0.f;
-    }
+    //} else {
+        //game->player2.velocity.y = 0.f;
+    //}
 
 };
  
@@ -390,6 +419,7 @@ void gameUpdate(GameInput input) {
     GameStatus lastStatus = gameStatus;
 
     HandleInput(input);
+    padAI();
     runSimulation(input.deltaTime);
 
     switch (gameStatus) { 

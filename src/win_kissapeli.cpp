@@ -141,8 +141,6 @@ Win_CreateGLContext()
 #if VSYNC
     if (wglewIsSupported( "WGL_EXT_swap_control")) {
         wglSwapIntervalEXT(1);
-    }  else {
-        wglSwapIntervalEXT(1);
     }
 #endif
 
@@ -480,7 +478,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
             SetWindowText( Window, timeStrBuffer);
         }
 #endif
-#if LOGLEVEL > 1
+#if LOGLEVEL > 1 && ENABLE_CONSOLE
         printf( "frame: %llu\n", frame);
 #endif
 
