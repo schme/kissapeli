@@ -10,20 +10,16 @@
 #include <stdio.h>
 #include <assert.h>
 
-
 #include "kissapeli.h"
 #include "types.h"
 
-
-const static int32 windowWidth = (int32)boardWidth;
-const static int32 windowHeight = (int32)boardHeight;
-
+const static int32 windowWidth = 1440;
+const static int32 windowHeight = 900;
 
 struct Win_WindowDimensions 
 {
     int32 width;
     int32 height;
 };
-
 
 #endif // WIN_KISSAPELI_H_

@@ -1,8 +1,8 @@
 #include "render.h"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 enum {
     BACKGROUND, PLAYER1, PLAYER2, BALL
@@ -12,13 +12,16 @@ static GLuint shaderProgram = 0;
 static GLuint vbo = 0;
 static GLuint vao = 0;
 
-static float screenWidth = 0;
-static float screenHeight = 0;
-static float boardWidth = 0;
-static float boardHeight = 0;
+static real32 aspectRatio = 0;
+static real32 screenWidth = 0;
+static real32 screenHeight = 0;
+static real32 boardWidth = 0;
+static real32 boardHeight = 0;
 
 // 2 floats * 4 corners * ( board, 2 pads, ball )
 static uint32 vertexDataSize = 32 * sizeof(float);
+
+GLuint scoreTex[10];
 
 GLuint screenSizeUnif;
 GLuint boardSizeUnif;
@@ -37,6 +40,8 @@ void initVertexBuffer() {
 }
 
 int initRender( void* vertBuf, real32 width, real32 height ) {
+
+    //glGenTextures(10, scoreTex);
 
     vertexBuffer = vertBuf;    
     boardWidth = width;
@@ -64,7 +69,7 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     glUniform2f( boardSizeUnif, boardWidth, boardHeight);
     glUseProgram(0);
 
-    glClearColor( 0.5f, 1.0f, 0.5f, 1.0f);
+    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -120,10 +125,27 @@ void draw(uint64 frame, GameState gameState) {
 }
 
 
-void resize( int w, int h) {
-    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-    screenWidth = (float)w;
-    screenHeight = (float)h;
+void resize( int32 w, int32 h) {
+
+    real32 aspectRatio = boardWidth / boardHeight;
+    real32 windowAspectRatio = (real32)w / (real32)h;
+    real32 paddingY = 0;
+    real32 paddingX = 0;
+
+
+    if( windowAspectRatio > aspectRatio ) {
+        screenHeight = (real32)h;
+        screenWidth = screenHeight * aspectRatio;
+        paddingX = (w - screenWidth) / 2.0f;
+
+    } else {
+        screenWidth = (real32)w;
+        screenHeight = screenWidth / aspectRatio;
+        paddingY = (h - screenHeight) / 2.0f;
+    }
+
+    glViewport((GLint)paddingX, (GLint)paddingY, (GLsizei)screenWidth, (GLsizei)screenHeight);
+
     glUseProgram( shaderProgram);
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUseProgram(0);

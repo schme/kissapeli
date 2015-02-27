@@ -45,7 +45,7 @@ void padAI()
 
     static bool32 chasing = false;
     real32 relaxArea;
-    if( game->ball.position.x <= (game->board.dimensions.x/2.0)) {
+    if( game->ball.position.x <= (game->board.dimensions.x/2.0f)) {
         relaxArea = padHeight * 2.0f;
     } else {
         relaxArea = 1.0f;
@@ -56,7 +56,7 @@ void padAI()
     real32 diffY = std::abs(ballY - padCenterY);
 
     if( chasing) {
-        if( (diffY - relaxArea) < 0.0f) {
+        if( (diffY - relaxArea) < 0) {
             chasing = false;
             game->player2.velocity.y = 0.0f;
 
@@ -65,11 +65,11 @@ void padAI()
                 game->player2.velocity.y = diffY;
             } else {
                 game->player2.velocity.y = padVelocityModAI *
-                    (ballY - padCenterY < 0.0f ? -1.0f : 1.0f);
+                    (ballY - padCenterY < 0 ? -1.0f : 1.0f);
             }
         }
 
-    } else if( diffY - relaxArea > 0.0f) {
+    } else if( diffY - relaxArea > 0) {
         chasing = true;
     }
 

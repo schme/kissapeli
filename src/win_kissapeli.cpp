@@ -413,6 +413,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
     assert( gameMemory.memoryPool && " MemoryPool allocation failed!\n");
 
     gameInit( &gameMemory, &audioEngine);
+    Win_WindowDimensions dimensions = Win_GetWindowDimensions( Window);
+    resizeCallback( dimensions.width, dimensions.height);
 
     /**
      * MainLoop
