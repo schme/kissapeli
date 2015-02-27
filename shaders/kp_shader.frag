@@ -9,6 +9,7 @@ out vec4 color;
 flat in vec4 vertColor;
 
 uniform vec2 screenSize;
+uniform vec2 boardSize;
 uniform int frame;
 uniform int object;
 /*uniform float deltaTime;*/

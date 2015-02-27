@@ -4,7 +4,6 @@
 #include <stdlib.h> // rand()
 #include <time.h>
 
-//TODO(kasper): Isolate the audio layer
 #include "win_audio.h"
 
 #include "render.h"
@@ -25,10 +24,10 @@ static real32 ballRadius = 12;
 static real32 padVelocityMod = 10;
 static real32 padVelocityModAI = 8;
 
-static glm::vec4 player1Color = glm::vec4( 0.7f, 0.0f, 0.8f, 1.0f);
-static glm::vec4 player2Color = glm::vec4( 0.8f, 0.0f, 0.7f, 1.0f);
-static glm::vec4 ballColor = glm::vec4( 0.8f, 0.0f, 0.8f, 1.0f);
-static glm::vec4 backgroundColor = glm::vec4( 0.0f, 0.0f, 0.05f, 1.0f);
+static glm::vec4 player1Color = glm::vec4( 0.8f, 0.0f, 0.9f, 1.0f);
+static glm::vec4 player2Color = glm::vec4( 0.9f, 0.0f, 0.8f, 1.0f);
+static glm::vec4 ballColor = glm::vec4( 0.9f, 0.0f, 0.9f, 1.0f);
+static glm::vec4 backgroundColor = glm::vec4( 0.05f, 0.03f, 0.12f, 1.0f);
 
 static real32 boardWidth = 1024;
 static real32 boardHeight = 512;
