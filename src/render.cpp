@@ -41,8 +41,6 @@ void initVertexBuffer() {
 
 int initRender( void* vertBuf, real32 width, real32 height ) {
 
-    //glGenTextures(10, scoreTex);
-
     vertexBuffer = vertBuf;    
     boardWidth = width;
     boardHeight = height;
@@ -73,6 +71,28 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+
+    glGenTextures(10, scoreTex);
+    for (int i = 0; i < 10; ++i)
+    {
+        glBindTexture(GL_TEXTURE_2D, scoreTex[i]);  
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        char filename[64];
+        sprintf_s( filename, 64, IMAGEPATH "%d.bmp", i);
+
+        int x, y, n;
+        unsigned char *image_data = stbi_load(filename, &x, &y, &n, 4);
+        assert(image_data);
+
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_BYTE, image_data);
+        stbi_image_free(image_data);
+    }
+
 
     //glEnable( GL_BLEND);
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
