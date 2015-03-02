@@ -12,7 +12,6 @@ uniform vec2 screenSize;
 uniform vec2 boardSize;
 uniform int frame;
 uniform int object;
-/*uniform float deltaTime;*/
 
 
 void main()

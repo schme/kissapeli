@@ -1,8 +1,5 @@
 #include "render.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 
 enum {
     BACKGROUND, PLAYER1, PLAYER2, BALL
@@ -21,13 +18,19 @@ static real32 boardHeight = 0;
 // 2 floats * 4 corners * ( board, 2 pads, ball )
 static uint32 vertexDataSize = 32 * sizeof(float);
 
-GLuint scoreTex[10];
-
 GLuint screenSizeUnif;
 GLuint boardSizeUnif;
 GLuint frameUnif;
 GLuint deltaTimeUnif;
 GLuint objectUnif;
+
+float scoreBoard[] = {
+//  Position      Color             Texcoords
+    -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
+     0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
+     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right
+    -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left
+};
 
 void initVertexBuffer() {
     
@@ -35,8 +38,8 @@ void initVertexBuffer() {
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
     glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW); 
-    glBindBuffer( GL_ARRAY_BUFFER, 0);
 
+    glBindBuffer( GL_ARRAY_BUFFER, 0);
 }
 
 int initRender( void* vertBuf, real32 width, real32 height ) {
@@ -68,30 +71,10 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     glUseProgram(0);
 
     glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
+
     initVertexBuffer();
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-
-
-    glGenTextures(10, scoreTex);
-    for (int i = 0; i < 10; ++i)
-    {
-        glBindTexture(GL_TEXTURE_2D, scoreTex[i]);  
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        
-        char filename[64];
-        sprintf_s( filename, 64, IMAGEPATH "%d.bmp", i);
-
-        int x, y, n;
-        unsigned char *image_data = stbi_load(filename, &x, &y, &n, 4);
-        assert(image_data);
-
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_BYTE, image_data);
-        stbi_image_free(image_data);
-    }
 
 
     //glEnable( GL_BLEND);
@@ -139,6 +122,7 @@ void draw(uint64 frame, GameState gameState) {
     glUniform1i( objectUnif, BALL);
     glDrawArrays( GL_QUADS, 12, 4);
 
+    glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
     glUseProgram(0);

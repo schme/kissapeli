@@ -8,7 +8,7 @@
 layout(location = 0) in vec2 position;
 layout(location = 1) in vec4 color;
 
-flat out vec4 vertColor;
+flat    out vec4 vertColor;
 
 uniform vec2 screenSize;
 uniform vec2 boardSize;
