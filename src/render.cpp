@@ -33,18 +33,18 @@ float scoreBoard[] = {
 };
 
 void initVertexBuffer() {
-    
+
     glGenBuffers(1, &vbo);
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo);
-    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW); 
+    glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW);
 
     glBindBuffer( GL_ARRAY_BUFFER, 0);
 }
 
 int initRender( void* vertBuf, real32 width, real32 height ) {
 
-    vertexBuffer = vertBuf;    
+    vertexBuffer = vertBuf;
     boardWidth = width;
     boardHeight = height;
 
@@ -60,9 +60,9 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 
     glUseProgram( shaderProgram);
 
-    screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize"); 
+    screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize");
     boardSizeUnif = glGetUniformLocation( shaderProgram, "boardSize");
-    frameUnif = glGetUniformLocation( shaderProgram, "frame"); 
+    frameUnif = glGetUniformLocation( shaderProgram, "frame");
     objectUnif = glGetUniformLocation( shaderProgram, "object");
     deltaTimeUnif = glGetUniformLocation( shaderProgram, "deltaTime");
 

@@ -15,7 +15,7 @@ const real32 timeStep = 16.6f;
 
 const real32 padPadding = 128;
 const real32 padWidth = 12;
-const real32 padHeight = 32; 
+const real32 padHeight = 32;
 const real32 ballXSpeed = 5;
 const real32 ballYSpeed = 3;
 const real32 ballEnglishMax = 4;

@@ -24,7 +24,7 @@ GLint loadShader( const char *filename, GLenum shaderType) {
     GLuint shaderObject = glCreateShader( shaderType);
     glShaderSource( shaderObject, 1, (const GLchar**)&shader, NULL);
     glCompileShader( shaderObject);
-    
+
     GLint status;
     glGetShaderiv( shaderObject, GL_COMPILE_STATUS, &status);
     if( status == GL_FALSE) {

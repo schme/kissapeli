@@ -50,7 +50,7 @@ Win_ToggleFullscreen( HWND hwnd)
         MONITORINFO mi = { sizeof(mi) };
         if( GetWindowPlacement( hwnd, &windowPlacement) &&
             GetMonitorInfo( MonitorFromWindow( hwnd,
-                    MONITOR_DEFAULTTOPRIMARY), &mi)) 
+                    MONITOR_DEFAULTTOPRIMARY), &mi))
             {
             SetWindowLong( hwnd, GWL_STYLE,
                     dwStyle & ~WS_OVERLAPPEDWINDOW);
@@ -111,7 +111,7 @@ Win_CreateGLContext()
             WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
             WGL_CONTEXT_MINOR_VERSION_ARB, 1,
             WGL_CONTEXT_FLAGS_ARB, 0,
-            0  
+            0
     };
 
     if( wglewIsSupported( "WGL_ARB_create_context") == 1)
@@ -166,7 +166,7 @@ Win_GetSecondsElapsed( LARGE_INTEGER Start, LARGE_INTEGER End)
 }
 
 
-LRESULT CALLBACK 
+LRESULT CALLBACK
 Win_WindowProc(  HWND Window,
                   UINT Message,
                   WPARAM wParam,
@@ -204,12 +204,12 @@ Win_WindowProc(  HWND Window,
             OutputDebugStringA( "WM_ACTIVATEAPP\n");
         } break;
         case WM_CLOSE: {
-            
+
             OutputDebugStringA("WM_CLOSE\n");
             globalPlaying = false;
             wglMakeCurrent( NULL, NULL);
             wglDeleteContext( RenderingContext);
-            ReleaseDC( Window, DeviceContext); 
+            ReleaseDC( Window, DeviceContext);
         } break;
         case WM_DESTROY: {
 
@@ -234,10 +234,10 @@ Win_HandleMessages(GameInput *input) {
             case WM_QUIT: {
                 globalPlaying = false;
             } break;
-                          
+
             case WM_SYSKEYUP:
             case WM_KEYUP:
-            case WM_SYSKEYDOWN: 
+            case WM_SYSKEYDOWN:
             case WM_KEYDOWN: {
 
                 uint32 VKCode = (uint32)Message.wParam;
@@ -245,7 +245,7 @@ Win_HandleMessages(GameInput *input) {
                 bool32 isDown = ((Message.lParam & (1 << 31)) == 0);
                 if( wasDown != isDown) {
 
-                    switch (VKCode) { 
+                    switch (VKCode) {
                         case 'W': {
                             input->KEY_W = 1;
                             //OutputDebugStringA("W \n");
@@ -291,7 +291,7 @@ Win_HandleMessages(GameInput *input) {
                             //OutputDebugStringA("RIGHT \n");
                         } break;
                         case VK_SPACE: {
-                            
+
                             OutputDebugStringA("SPACE \n");
                         } break;
                         case VK_ESCAPE: {
@@ -314,7 +314,7 @@ Win_HandleMessages(GameInput *input) {
                 }
 
             } break;
-    
+
         default: {
             TranslateMessage( &Message);
             DispatchMessageA( &Message);
@@ -325,10 +325,10 @@ Win_HandleMessages(GameInput *input) {
 }
 
 
-int 
-CALLBACK WinMain(   HINSTANCE Instance, 
+int
+CALLBACK WinMain(   HINSTANCE Instance,
                     HINSTANCE PrevInstance,
-                    LPSTR CmdLine, 
+                    LPSTR CmdLine,
                     int ShowCommand )
 {
 
@@ -350,9 +350,9 @@ CALLBACK WinMain(   HINSTANCE Instance,
     perfCountFrequency = PerfCountFrequencyResult.QuadPart;
 
     bool32 sleepIsGranular = (timeBeginPeriod( 1) == TIMERR_NOERROR);
-    
+
 #define GameUpdateHz 60
-    real32 targetSecondsPerFrame = 1.0f / (real32)GameUpdateHz; 
+    real32 targetSecondsPerFrame = 1.0f / (real32)GameUpdateHz;
 
     // WindowClass
     WNDCLASSA WindowClass = {};
@@ -379,8 +379,8 @@ CALLBACK WinMain(   HINSTANCE Instance,
         return 0;
     }
 
-    HWND Window = 
-            CreateWindowExA( 
+    HWND Window =
+            CreateWindowExA(
                     0,
                     WindowClass.lpszClassName,
                     "Kissapeli NextGen",
@@ -449,10 +449,10 @@ CALLBACK WinMain(   HINSTANCE Instance,
 
             real32 testSecondsElapsedForFrame = Win_GetSecondsElapsed( LastCounter, Win_GetWallClock());
         } else {
-            OutputDebugStringA( "MISSED FRAME\n"); 
+            OutputDebugStringA( "MISSED FRAME\n");
         }
 
-        
+
         LARGE_INTEGER EndCounter = Win_GetWallClock();
         msPerFrame = 1000.0f*Win_GetSecondsElapsed( LastCounter, EndCounter);
         LastCounter = EndCounter;
@@ -484,7 +484,7 @@ CALLBACK WinMain(   HINSTANCE Instance,
         printf( "frame: %llu\n", frame);
 #endif
 
-        
+
     }
 
     return 0;

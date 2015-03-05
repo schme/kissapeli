@@ -31,7 +31,7 @@ class AudioEngine
 {
 public:
     int32 init();
-    /** 
+    /**
      * loadAudio()
      * Loads the audio file and creates a source voice.
      * Overwrites the id if it's already in use.
@@ -45,7 +45,7 @@ public:
 private:
     IXAudio2 *XAudioInstance;
     IXAudio2MasteringVoice *AudioMasterVoice;
-    IXAudio2SourceVoice* voices[SOUNDS_MAX]; 
+    IXAudio2SourceVoice* voices[SOUNDS_MAX];
     std::vector<AudioCue> sounds;
     /** use the same format for every voice */
     WAVEFORMATEXTENSIBLE wfx;

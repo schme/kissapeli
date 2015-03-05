@@ -154,11 +154,11 @@ HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChu
 
         default:
             if( INVALID_SET_FILE_POINTER == SetFilePointer( hFile, dwChunkDataSize, NULL, FILE_CURRENT ) )
-            return HRESULT_FROM_WIN32( GetLastError() );            
+            return HRESULT_FROM_WIN32( GetLastError() );
         }
 
         dwOffset += sizeof(DWORD) * 2;
-        
+
         if (dwChunkType == fourcc)
         {
             dwChunkSize = dwChunkDataSize;
@@ -170,7 +170,7 @@ HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD & dwChunkSize, DWORD & dwChu
 
     }
     return S_OK;
-    
+
 }
 
 

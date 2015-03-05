@@ -36,13 +36,11 @@ bool32 aabbCollision( Rect *A, Rect *B ) {
             (*A)[1].y > (*B)[0].y );
 }
 
-
 /**
  * Decypher only if you're mad.
  */
 void padAI()
 {
-
     static bool32 chasing = false;
     real32 relaxArea;
     if( game->ball.position.x <= (game->board.dimensions.x/2.0f)) {
@@ -82,7 +80,7 @@ void padAI()
 void gameVertices() {
 
     char* index = (char*)vertexBuffer;
-    
+
     float boardVertices[] = { 0.f, 0.f,
                    game->board.dimensions.x, 0.f,
                    game->board.dimensions.x, game->board.dimensions.y,
@@ -100,23 +98,23 @@ void gameVertices() {
     (*qa)[2] = p->position.x + p->dimensions.x;
     (*qa)[3] = p->position.y;
 
-    (*qa)[4] = p->position.x + p->dimensions.x; 
+    (*qa)[4] = p->position.x + p->dimensions.x;
     (*qa)[5] = p->position.y + p->dimensions.y;
 
     (*qa)[6] = p->position.x;
     (*qa)[7] = p->position.y + p->dimensions.y;
 
     p = &game->player2;
-    (*qa)[8] = p->position.x; 
+    (*qa)[8] = p->position.x;
     (*qa)[9] = p->position.y;
 
-    (*qa)[10] = p->position.x + p->dimensions.x; 
+    (*qa)[10] = p->position.x + p->dimensions.x;
     (*qa)[11] = p->position.y;
 
-    (*qa)[12] = p->position.x + p->dimensions.x; 
+    (*qa)[12] = p->position.x + p->dimensions.x;
     (*qa)[13] = p->position.y + p->dimensions.y;
 
-    (*qa)[14] = p->position.x; 
+    (*qa)[14] = p->position.x;
     (*qa)[15] = p->position.y + p->dimensions.y;
 
     index += sizeof( PlayerArray);
@@ -132,7 +130,7 @@ void gameVertices() {
     index += sizeof( ballVertices);
 
     //TODO: is ugly pls do something
-    real32 colors[] = { 
+    real32 colors[] = {
 
         backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
         backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a,
@@ -181,7 +179,6 @@ void worldCollision( Pad *p, Rect *Board) {
     }
 }
 
-
 void worldCollision( Ball *b, Rect *Board) {
 
     bool32 collidedGoal = false;
@@ -227,7 +224,7 @@ void applyVelocities(real64 ddeltaTime) {
     }
 }
 
-    
+
 void ballRectCollision( Rect *rectBall, Rect *rectPad) {
 
     if( aabbCollision( rectBall, rectPad)) {
@@ -283,7 +280,7 @@ void collisions(real64 deltaTime) {
 
 
 void runSimulation(real64 deltaTime) {
-    
+
     collisions(deltaTime);
     applyVelocities(deltaTime);
 }
@@ -301,7 +298,7 @@ void allocateGameMemory() {
 Ball getNewBall() {
     int32 random = rand();
 
-    Ball ball = { glm::vec2( game->board.dimensions.x/2.f, 
+    Ball ball = { glm::vec2( game->board.dimensions.x/2.f,
                              game->board.dimensions.y/2.f),
                   glm::vec2( (random < RAND_MAX/2) ? -ballXSpeed : ballXSpeed,
                              (random % 10 < 5) ? -ballYSpeed : ballYSpeed),
@@ -318,11 +315,11 @@ void initGame() {
     Board board = { glm::vec2( boardWidth, boardHeight ) };
 
     Pad player1 = { glm::vec2( padPadding, (real32)boardHeight/2.f - padHeight/2.f),
-                    glm::vec2(padWidth, padHeight) 
+                    glm::vec2(padWidth, padHeight)
     };
-    Pad player2 = { glm::vec2(  boardWidth - padPadding - padWidth, 
+    Pad player2 = { glm::vec2(  boardWidth - padPadding - padWidth,
                                 boardHeight/2.f - padHeight/2.f),
-                    glm::vec2(padWidth, padHeight) 
+                    glm::vec2(padWidth, padHeight)
     };
 
     game->player1 = player1;
@@ -368,17 +365,17 @@ void changeInputState( GameInput *state, GameInput input) {
 
     if( input.KEY_W ) {
         (*state).KEY_W = !(*state).KEY_W;
-    } 
+    }
     if( input.KEY_S) {
         (*state).KEY_S = !(*state).KEY_S;
-    } 
+    }
 
     //if( input.KEY_UP) {
         //(*state).KEY_UP = !(*state).KEY_UP;
-    //} 
+    //}
     //if( input.KEY_DOWN) {
         //(*state).KEY_DOWN = !(*state).KEY_DOWN;
-    //} 
+    //}
 }
 
 
@@ -411,7 +408,7 @@ void HandleInput( GameInput input) {
     //}
 
 };
- 
+
 
 void gameUpdate(GameInput input) {
 
@@ -422,7 +419,7 @@ void gameUpdate(GameInput input) {
     padAI();
     runSimulation(input.deltaTime);
 
-    switch (gameStatus) { 
+    switch (gameStatus) {
         case Resetting: {
 
             if( lastStatus == Playing ) {
@@ -435,14 +432,13 @@ void gameUpdate(GameInput input) {
             } else {
                 timer += input.deltaTime;
             }
-            
+
         } break;
         default: break;
     }
 
     gameRender( input.frame, input.deltaTime);
 }
-
 
 void resizeCallback( int w, int h) {
     resize(w, h);
