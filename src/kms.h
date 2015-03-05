@@ -8,10 +8,6 @@
 
 #define DEBUG_STRING_SIZE 256
 
-#define CONCAT( first, second)\
-    char msg[DEBUG_STRING_SIZE];\
-    snprintf( msg, DEBUG_STRING_SIZE, "%s%s", first, second);\
-
 #define OUTPUTDEBUG( msg)\
     fprintf( stderr, "%s", msg )
 

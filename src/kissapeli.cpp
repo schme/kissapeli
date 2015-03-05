@@ -206,7 +206,7 @@ void worldCollision( Ball *b, Rect *Board) {
 
     if( collidedGoal) {
         audioEngine->playAudio(3);
-        printf("p1lives: %d\tp2lives: %d\n", p1lives, p2lives);
+        printf("p1lives: %u\tp2lives: %u\n", p1lives, p2lives);
     } else if( collidedEdge) {
         audioEngine->playAudio(2);
     }

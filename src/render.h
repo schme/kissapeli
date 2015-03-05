@@ -7,8 +7,11 @@
 #include "kms.h"
 #include "ks_glutils.h"
 
+#define REALLY_CONCAT(a,b) a##b
+#define CONCAT(a,b) REALLY_CONCAT(a,b)
 #define ASSETPATH  "assets/"
 #define IMAGEPATH   ASSETPATH "images/"
+#define IMAGEPATH_i(image)   ASSETPATH "images/" image
 #define SHADERPATH(shader)  "shaders/" shader
 
 const static int vertexBufferSize = 1024;
