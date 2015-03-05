@@ -1,6 +1,5 @@
 #include "render.h"
 
-
 enum {
     BACKGROUND, PLAYER1, PLAYER2, BALL
 };
@@ -48,11 +47,8 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     boardWidth = width;
     boardHeight = height;
 
-    std::vector<GLint> shaders;
-    shaders.push_back(loadShader( SHADERPATH("kp_shader.vert"), GL_VERTEX_SHADER));
-    shaders.push_back(loadShader( SHADERPATH("kp_shader.frag"), GL_FRAGMENT_SHADER));
-
-    shaderProgram = createProgram( shaders);
+    shaderProgram = createProgram( SHADERPATH("kp_shader.vert"),
+                                    SHADERPATH("kp_shader.frag"));
     if( !shaderProgram) {
         assert(0 && "No Shader Program!\n");
         return 0;

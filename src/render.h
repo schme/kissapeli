@@ -4,9 +4,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-#include "types.h"
 #include "kms.h"
-#include "kms_glutils.h"
+#include "ks_glutils.h"
 
 #define ASSETPATH  "assets/"
 #define IMAGEPATH   ASSETPATH "images/"
