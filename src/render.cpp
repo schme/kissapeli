@@ -4,8 +4,8 @@ enum {
     BACKGROUND, PLAYER1, PLAYER2, BALL
 };
 
-static GLuint shaderProgram = 0;
-static GLuint vbo = 0;
+static GLuint shaderProgram[2] = {0, 0};
+static GLuint vbo[2] = {0, 0};  // 0 for objects, 1 for scoreBoard
 static GLuint vao = 0;
 
 static real32 aspectRatio = 0;
@@ -33,10 +33,13 @@ float scoreBoard[] = {
 
 void initVertexBuffer() {
 
-    glGenBuffers(1, &vbo);
+    glGenBuffers(2, vbo);
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo);
+    glBindBuffer( GL_ARRAY_BUFFER, vbo[0]);
     glBufferData( GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW);
+
+    glBindBuffer( GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData( GL_ARRAY_BUFFER, sizeof( scoreBoard), scoreBoard, GL_STATIC_DRAW);
 
     glBindBuffer( GL_ARRAY_BUFFER, 0);
 }
@@ -47,20 +50,17 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     boardWidth = width;
     boardHeight = height;
 
-    shaderProgram = createProgram( SHADERPATH("kp_shader.vert"),
+    shaderProgram[0] = createProgram( SHADERPATH("kp_shader.vert"),
                                     SHADERPATH("kp_shader.frag"));
-    if( !shaderProgram) {
-        assert(0 && "No Shader Program!\n");
-        return 0;
-    }
+    assert(shaderProgram[0]);
 
-    glUseProgram( shaderProgram);
+    glUseProgram( shaderProgram[0]);
 
-    screenSizeUnif = glGetUniformLocation( shaderProgram, "screenSize");
-    boardSizeUnif = glGetUniformLocation( shaderProgram, "boardSize");
-    frameUnif = glGetUniformLocation( shaderProgram, "frame");
-    objectUnif = glGetUniformLocation( shaderProgram, "object");
-    deltaTimeUnif = glGetUniformLocation( shaderProgram, "deltaTime");
+    screenSizeUnif = glGetUniformLocation( shaderProgram[0], "screenSize");
+    boardSizeUnif = glGetUniformLocation( shaderProgram[0], "boardSize");
+    frameUnif = glGetUniformLocation( shaderProgram[0], "frame");
+    objectUnif = glGetUniformLocation( shaderProgram[0], "object");
+    deltaTimeUnif = glGetUniformLocation( shaderProgram[0], "deltaTime");
 
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUniform2f( boardSizeUnif, boardWidth, boardHeight);
@@ -93,12 +93,12 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 void draw(uint64 frame, GameState gameState) {
 
     glClear( GL_COLOR_BUFFER_BIT );
-    glUseProgram( shaderProgram);
+    glUseProgram( shaderProgram[0]);
 
     glUniform1i( frameUnif, (uint32)frame);
     glUniform1f( deltaTimeUnif, (real32)gameState.deltaTime);
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo);
+    glBindBuffer( GL_ARRAY_BUFFER, vbo[0]);
     glBufferSubData( GL_ARRAY_BUFFER, 0, vertexBufferSize, vertexBuffer);
 
     glEnableVertexAttribArray(0);
@@ -146,7 +146,7 @@ void resize( int32 w, int32 h) {
 
     glViewport((GLint)paddingX, (GLint)paddingY, (GLsizei)screenWidth, (GLsizei)screenHeight);
 
-    glUseProgram( shaderProgram);
+    glUseProgram( shaderProgram[0]);
     glUniform2f( screenSizeUnif, screenWidth, screenHeight);
     glUseProgram(0);
 };
