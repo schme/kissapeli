@@ -35,7 +35,7 @@ GLuint objectUnif;
 GLuint p1score_sampler;
 GLuint p2score_sampler;
 
-float scoreBoard[] = {
+static float scoreBoard[] = {
 //  Position      Color             Texcoords
     -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
      0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
@@ -43,7 +43,7 @@ float scoreBoard[] = {
     -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left
 };
 
-GLuint elements[] = {
+static GLuint elements[] = {
     0, 1, 2,
     2, 3, 0
 };
@@ -61,8 +61,8 @@ void initVertexBuffer() {
 
     glBindBuffer( GL_ARRAY_BUFFER, vbo[1]);
     glBufferData( GL_ARRAY_BUFFER, sizeof( scoreBoard), scoreBoard, GL_STATIC_DRAW);
-    glGenBuffers(1, &score_ebo);
 
+    glGenBuffers(1, &score_ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, score_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
 
@@ -103,6 +103,9 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 
     screenSizeUnif[1] = glGetUniformLocation( shaderProgram[1], "screenSize");
 
+    p1score_sampler = glGetUniformLocation( shaderProgram[1], "p1score");
+    p2score_sampler = glGetUniformLocation( shaderProgram[1], "p2score");
+
     glUseProgram( shaderProgram[0]);
     glUniform2f( screenSizeUnif[0], screenWidth, screenHeight);
     glUniform2f( boardSizeUnif, boardWidth, boardHeight);
@@ -112,9 +115,8 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 
     glUseProgram(0);
 
-    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
-    initVertexBuffer();
 
+    initVertexBuffer();
     glGenTextures(10, score_tex);
 
     int32 x,y,n;
@@ -155,9 +157,6 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
 
 #endif
 
-    p1score_sampler = glGetUniformLocation( shaderProgram[1], "p1score");
-    p2score_sampler = glGetUniformLocation( shaderProgram[1], "p2score");
-
     //glEnable( GL_BLEND);
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -170,6 +169,8 @@ int initRender( void* vertBuf, real32 width, real32 height ) {
     glEnable( GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f);
 
     return 1;
 }
@@ -211,13 +212,16 @@ void draw(uint64 frame, GameState gameState) {
     glUseProgram(shaderProgram[1]);
 
     if( gameState.p1lives <= 9) {
-        glUniform1i( p1score_sampler, gameState.p1lives);
+        //glUniform1i( p1score_sampler, gameState.p1lives);
+        //
+        glUniform1i( p1score_sampler, 9);
     } else {
         glUniform1i( p1score_sampler, 0);
     }
 
     if( gameState.p2lives <= 9) {
-        glUniform1i( p2score_sampler, gameState.p2lives);
+        //glUniform1i( p2score_sampler, gameState.p2lives);
+        glUniform1i( p2score_sampler, 9);
     } else {
         glUniform1i( p2score_sampler, 0);
     }
@@ -233,9 +237,12 @@ void draw(uint64 frame, GameState gameState) {
 
     glUseProgram(0);
 
-    //glDisableVertexAttribArray(score_tex_attrib);
-    //glDisableVertexAttribArray(score_col_attrib);
-    //glDisableVertexAttribArray(score_pos_attrib);
+    glDisableVertexAttribArray(score_tex_attrib);
+    glDisableVertexAttribArray(score_col_attrib);
+    glDisableVertexAttribArray(score_pos_attrib);
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer( GL_ARRAY_BUFFER, 0);
 }
 
 

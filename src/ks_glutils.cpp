@@ -28,7 +28,7 @@ do {\
 } while(0)
 
 
-inline std::string 
+inline std::string
 fileToString( const char *filename) {
 
     std::ifstream file( filename);
@@ -46,7 +46,7 @@ fileToString( const char *filename) {
     return buffer.str();
 }
 
-GLint 
+GLint
 loadShader( const char *filename, GLenum shaderType) {
 
     GLint shader = 0;
@@ -58,7 +58,7 @@ loadShader( const char *filename, GLenum shaderType) {
 
     glShaderSource( shader, 1, (const GLchar**)&shaderStr, NULL);
     glCompileShader( shader);
-    
+
     GLint status;
     glGetShaderiv( shader, GL_COMPILE_STATUS, &status);
     if( status == GL_FALSE) {
@@ -77,7 +77,7 @@ loadShader( const char *filename, GLenum shaderType) {
 }
 
 
-GLint 
+GLint
 createProgram(const char *vertex, const char *fragment) {
 
     GLint program = glCreateProgram();
@@ -104,7 +104,7 @@ createProgram(const char *vertex, const char *fragment) {
 }
 
 
-GLint 
+GLint
 createProgram(const char *vertex, const char *fragment, const char *geometry) {
 
     GLint program = glCreateProgram();
