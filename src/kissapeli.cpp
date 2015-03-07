@@ -292,9 +292,6 @@ void allocateGameMemory() {
     vertexBuffer = popMemoryStack( memory, vertexBufferSize);
 }
 
-/**
- * TODO(Kasper): Why is the board wrong width before resize?
- */
 Ball getNewBall() {
     int32 random = rand();
 

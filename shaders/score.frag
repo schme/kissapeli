@@ -3,12 +3,16 @@
 in vec3 Color;
 in vec2 Texcoord;
 out vec4 outColor;
+
+uniform int score;
 uniform sampler2D p1score;
 uniform sampler2D p2score;
 
 void main() {
 
-    /*outColor = vec4(texture(p1score, Texcoord).a, texture(p2score, Texcoord).a,*/
-                /*0.0, 1.0);*/
-    outColor = vec4(1);
+    if( score == 1) {
+        outColor = vec4( Color, texture( p1score, Texcoord).a);
+    } else {
+        outColor = vec4( Color, texture( p2score, Texcoord).a);
+    }
 }

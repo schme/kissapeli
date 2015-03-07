@@ -33,10 +33,10 @@ fileToString( const char *filename) {
 
     std::ifstream file( filename);
     if( !file.is_open()) {
-        assert( 0 && "FAIL: Opening file ");
         std::string msg("FAIL: Opening file: ");
         msg += filename; msg += "\n";
         std::cout << msg.c_str() << std::endl;
+        assert( !"FAIL: Opening file ");
     }
 
     std::stringstream buffer;
@@ -62,16 +62,10 @@ loadShader( const char *filename, GLenum shaderType) {
     GLint status;
     glGetShaderiv( shader, GL_COMPILE_STATUS, &status);
     if( status == GL_FALSE) {
-
-#if ENABLE_CONSOLE
         PRINT_SHADER_ERROR( shader);
-#endif
         assert(!"Shader didn't compile!");
     } else {
-
-#if ENABLE_CONSOLE
         printf("Shader compilation succeeded\n");
-#endif
     }
     return shader;
 }

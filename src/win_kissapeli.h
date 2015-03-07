@@ -16,7 +16,7 @@
 const static int32 windowWidth = 1440;
 const static int32 windowHeight = 900;
 
-struct Win_WindowDimensions 
+struct Win_WindowDimensions
 {
     int32 width;
     int32 height;
